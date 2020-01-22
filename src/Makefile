@@ -86,4 +86,3 @@ RBE_orig:
 clean: cleanfiles
 
 distclean: clean
-	rm -f Makefile.DEPEND Makefile.RULES
