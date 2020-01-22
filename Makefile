@@ -2,13 +2,7 @@ default : RBE
 
 include Makefile.def
 
-INSTALLFILES =  src/Makefile.DEPEND \
-		src/Makefile.RULES \
-		srcInterface/Makefile.DEPEND
-
-
 install: 
-	touch ${INSTALLFILES}
 
 #
 #       General Housekeeping
@@ -62,7 +56,6 @@ test_check:
 	ls -l test.diff
 
 clean:
-	@touch ${INSTALLFILES}
 	@cd src; make clean
 	@cd srcInterface; make clean
 	@(if [ -d util ];  then cd util;  make clean; fi);
@@ -72,7 +65,6 @@ distclean:
 	./Config.pl -uninstall
 
 allclean:
-	@touch ${INSTALLFILES}
 	@cd src; make distclean
 	cd srcInterface; make distclean
 	rm -f *~
