@@ -1,2 +1,3 @@
+# ModRBE cannot be compiled with -nan
 $Debug eq "yes" and ($Compiler eq "f95" or $Compiler eq "nagfor")
-	${COMPILE.f90} ${SEARCH} -c -O0 -C -gline -save ${PRECISION} ModRbe.f90
+	${COMPILE.f90} ${SEARCH} -c -O0 -C -gline -save -Wc=`which gcc` ${PRECISION} ModRbe.f90
