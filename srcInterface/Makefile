@@ -37,5 +37,4 @@ ${MY_LIB}: ${RBE_LIB} ${OBJECTS}
 clean: cleanfiles
 
 distclean: clean
-	rm -f Makefile.DEPEND
 
