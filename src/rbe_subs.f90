@@ -374,10 +374,10 @@ subroutine readInputData
 
   rc=(re+abs(hlosscone)*1000.)/re  ! losscone in Re
   
-  if (mod(tf,dt).ne.0.) then
-     write(*,*) 'RBE ERROR: mod(tf,dt).ne.0.'
-     call CON_stop('RBE ERROR')
-  endif
+!  if (mod(tf,dt).ne.0.) then
+!     write(*,*) 'RBE ERROR: mod(tf,dt).ne.0.'
+!     call CON_stop('RBE ERROR')
+!  endif
 
   if (itype.eq.2) trans=0.
   nstep=ifix((tmax-tstart)/dt/2.+0.5)
