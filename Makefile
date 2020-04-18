@@ -47,11 +47,9 @@ test_run:
 
 
 test_check:
-	gunzip -c data/output/2002f296_e.fls.standalone.gz \
-		> ${TESTDIR}/RB/2002f296_e.fls.ref
 	${SCRIPTDIR}/DiffNum.pl -r=0.001 -a=1e-10 \
 		${TESTDIR}/RB/plots/2002f296_e.fls \
-		${TESTDIR}/RB/2002f296_e.fls.ref \
+		data/output/2002f296_e.fls.standalone.gz \
 		> test.diff
 	ls -l test.diff
 
