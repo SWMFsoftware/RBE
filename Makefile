@@ -77,11 +77,10 @@ rundir:
 			ln -s ${EMPIRICALIEDIR}/data EIE;\
 		fi;)
 	cd ${RUNDIR}/RB; \
-		mkdir restartOUT restartIN plots
-	cp data/input/rbe_e.fin ${RUNDIR}/RB/
-	cp data/input/B_wave_eq.dat ${RUNDIR}/RB/
-	cp data/input/Horne_chorus.tgz ${RUNDIR}/RB/
-	cd ${RUNDIR}/RB/; tar xzf Horne_chorus.tgz
+		mkdir restartOUT restartIN plots; \
+		cp ${RBDIR}/input/rbe_e.fin .; \
+		gunzip -c ${RBDIR}/input/B_wave_eq.dat.gz > B_wave_eq.dat; \
+		tar xzf ${RBDIR}/input/Horne_chorus.tgz
 	@(if [ "$(STANDALONE)" != "NO" ]; then \
 		cd ${RUNDIR} ; \
 		ln -s ${BINDIR}/rbe.exe .   ; \
