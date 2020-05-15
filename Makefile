@@ -47,11 +47,9 @@ test_run:
 
 
 test_check:
-	gunzip -c data/output/2002f296_e.fls.standalone.gz \
-		> ${TESTDIR}/RB/2002f296_e.fls.ref
 	${SCRIPTDIR}/DiffNum.pl -r=0.001 -a=1e-10 \
 		${TESTDIR}/RB/plots/2002f296_e.fls \
-		${TESTDIR}/RB/2002f296_e.fls.ref \
+		data/output/2002f296_e.fls.standalone.gz \
 		> test.diff
 	ls -l test.diff
 
@@ -79,11 +77,10 @@ rundir:
 			ln -s ${EMPIRICALIEDIR}/data EIE;\
 		fi;)
 	cd ${RUNDIR}/RB; \
-		mkdir restartOUT restartIN plots
-	cp data/input/rbe_e.fin ${RUNDIR}/RB/
-	cp data/input/B_wave_eq.dat ${RUNDIR}/RB/
-	cp data/input/Horne_chorus.tgz ${RUNDIR}/RB/
-	cd ${RUNDIR}/RB/; tar xzf Horne_chorus.tgz
+		mkdir restartOUT restartIN plots; \
+		cp ${RBDIR}/input/rbe_e.fin .; \
+		gunzip -c ${RBDIR}/input/B_wave_eq.dat.gz > B_wave_eq.dat; \
+		tar xzf ${RBDIR}/input/Horne_chorus.tgz
 	@(if [ "$(STANDALONE)" != "NO" ]; then \
 		cd ${RUNDIR} ; \
 		ln -s ${BINDIR}/rbe.exe .   ; \
