@@ -160,12 +160,12 @@ in the SAVEPLOT command.
 </command>
 
 <command name="RESTART">
-	<parameter name="IsRestart" type="logical" />
+	<parameter name="DoRestart" type="logical" default="F"/>
 
 #RESTART
-F		IsRestart
+F		DoRestart
 
-Determine whether or not to continue a previous run.
+Determine whether or not to continue a previous run. Default is false.
 </command>
 
 <command name="END">
