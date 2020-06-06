@@ -65,7 +65,8 @@ module rbe_cread2
        tsw(nswmax),xnswa(nswmax),vswa(nswmax),rc,tKp(nKpmax),&
        xKph(nKpmax)
   integer :: &
-       nimf,nsw,iyear,iday,js,itype,nstep,nstept,ndst,nKp,&
+       nimf,nsw,iyear,iday,js,iType=1, & ! no restart
+       nstep,nstept,ndst,nKp,&
        ires,ismo,imod, iprint=1, ntime,iconvect,init,il,ie,idfa,idfe,iplsp
 
   ! iprint=0: no output, iprint=1: final output only, 
