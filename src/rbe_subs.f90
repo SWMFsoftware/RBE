@@ -2085,16 +2085,24 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
   use ModRbSat,    ONLY: write_rb_sat, nRbSats, DoWriteSats
   use rbe_cread1
   use ModWriteTec, ONLY: write_tec, DoWriteTec
+  use ModUtilities, ONLY: cTab, write_string_tabs_name
 
-!!!  implicit none
+  implicit none
+
+  real, intent(in):: t, tstart, rc, xnsw, vsw, Bx, By, Bz, vswb,xnswb
+  integer, intent(in):: iw1(ik), iw2(ik), irm(ip), ntime, iprint, iplsp, itype
+  logical, intent(in) :: DoSaveRestart, DoSavePlot
+  
+  real:: hour, ro1
 
   real xlati(ir),ekev(ir,ip,iw,ik),y(ir,ip,0:ik+1),bo(ir,ip),&
        xjac(ir,iw),gride(je),gridp(je),gridy(ig),f2(ir,ip,iw,ik),ro(ir,ip),&
        xmlto(ir,ip),f(ir,ip,iw,ik),xlati1(ir),p(ir,ip,iw,ik),xmlt(ip),&
        flx(ir,ip,je,ig),ecbf(ir),ecdt(ir),eclc(ir),ecce(ir),&
        psd(ir,ip,iw,ik),ebound(je+1),density(ir,ip),parmod(10)
-  integer iw1(ik),iw2(ik),irm(ip),iSat
-  logical, intent(in) :: DoSaveRestart, DoSavePlot
+  integer::  iSat, i, j, k, m, iwh, ikh
+  !---------------------------------------------------------------------------
+
   hour=t/3600.
   do i=1,ir
      xlati1(i)=xlati(i)*180./pi   ! lat. at ionosphere in degree
@@ -2260,17 +2268,17 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
      open(unit=UnitTmp_,file=trim(NameRestartOutDir)//'restart.H')
      
      write(UnitTmp_,'(a)') '#RESTART'
-     write(UnitTmp_,'(a,a25)') 'T', 'IsRestart'
+     write(UnitTmp_,'(a)') 'T'//cTab//cTab//cTab//'DoRestart'
      write(UnitTmp_,*)
      write(UnitTmp_,'(a)') '#TIMESIMULATION'
-     write(UnitTmp_,'(es15.8,a25)') t,'tSimulation'
+     write(UnitTmp_,'(es15.8,a)') t,cTab//cTab//'TimeSimulation'
      write(UnitTmp_,*)
      write(UnitTmp_,'(a)') '#INPUTDATA'
-     write(UnitTmp_,'(a,a25)') storm, 'NameStorm'
+     call write_string_tabs_name(storm, 'NameStorm')
      write(UnitTmp_,*)
      write(UnitTmp_,'(a)') '#SPECIES'
-     if (js == 1 ) write(UnitTmp_,'(a,a32)') 'e','NameSpecies'
-     if (js == 2 ) write(UnitTmp_,'(a,a32)') 'H','NameSpecies'
+     if (js == 1 ) write(UnitTmp_,'(a)') 'e'//cTab//cTab//cTab//'NameSpecies'
+     if (js == 2 ) write(UnitTmp_,'(a)') 'H'//cTab//cTab//cTab//'NameSpecies'
      
      close(UnitTmp_)
   endif
