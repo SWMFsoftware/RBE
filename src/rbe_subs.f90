@@ -352,6 +352,7 @@ subroutine readInputData
   use rbe_cread2
   use rbe_io_unit
   use ModIoUnit, ONLY: UnitTmp_, io_unit_new
+  use ModUtilities, ONLY: CON_stop
 
   real:: bxw1(nswmax),byw1(nswmax),bzw1(nswmax),xnsw1(nswmax),vsw1(nswmax)
   integer :: isymH(60),Kp8(8)
@@ -1937,6 +1938,8 @@ subroutine boundary(t,tstart,f2,v,xjac,xmass,p,xktd,xnd,&
   use ModNumConst, ONLY: pi => cPi
   use rbe_cread1
   use ModGmRb,     ONLY: StateBmin_IIV,AveDens_,AveP_
+  use ModUtilities, ONLY: CON_stop
+
   real v(ir,ip,iw,ik),xjac(ir,iw),p(ir,ip,iw,ik),&
        xmass(ns),f2(ir,ip,iw,ik)
   integer iba(ip),irm(ip),irm0(ip)
@@ -2394,10 +2397,11 @@ end subroutine losscone
 !  Routine calculate the change of distribution function due to drift.
 !  Time step is reduced if Courant number is greater 1.
 !***********************************************************************
-subroutine drift(t,dt,f2,vl,vp,ro,rb,fb,dlati,dphi,iba,&
-     iw1,iw2,irm)
+subroutine drift(t,dt,f2,vl,vp,ro,rb,fb,dlati,dphi,iba,iw1,iw2,irm)
+
   use rbe_grid
   use rbe_cread2, ONLY: UseSplitting
+  use ModUtilities, ONLY: CON_stop
 
   real vl(ir,ip,iw,ik),vp(ir,ip,iw,ik),&
        f2(ir,ip,iw,ik),ro(ir,ip),fb(ip,iw,ik),dlati(ir),cl(ir,ip),cp(ir,ip)
@@ -2472,7 +2476,10 @@ end subroutine drift
 !  Fluxes at boundary are assumed to be local time symmetric.
 !*******************************************************************************
 subroutine driftl(t,dt1,f2,k,m,vl,ro,rb,fb,dlati,iba,irm)
+
   use rbe_grid
+  use ModUtilities, ONLY: CON_stop
+
   real f(ir),fa(0:ir),c(ir),vl(ir,ip,iw,ik),&
        f2(ir,ip,iw,ik),ro(ir,ip),fb(ip,iw,ik),ro1(ir),dlati(ir),al(0:ir)
   integer iba(ip),irm(ip)
@@ -2530,7 +2537,10 @@ end subroutine driftl
 !  azimuthal drift.
 !***********************************************************************
 subroutine driftp(t,dt1,f2,k,m,vp,fb,dphi,iba,irm)
+
   use rbe_grid
+  use ModUtilities, ONLY: CON_stop
+
   real fa(ip),f(ip),c(ip),vp(ir,ip,iw,ik),f2(ir,ip,iw,ik),fb(ip,iw,ik)
   integer iba(ip),irm(ip)
 
@@ -2585,7 +2595,10 @@ end subroutine driftp
 !  Fluxes at boundary are assumed to be local time symmetric.
 !*******************************************************************************
 subroutine driftlp(t,dt1,f2,k,m,vl,cl,cp,ro,rb,fb,dlati,iba,irm,n)
+
   use rbe_grid
+  use ModUtilities, ONLY: CON_stop
+
   real f(ir,ip),fal(ir,ip),fap(ir,ip),cl(ir,ip),cp(ir,ip),fupl(ir,ip),&
        vl(ir,ip,iw,ik),fupp(ir,ip),&
        f2(ir,ip,iw,ik),ro(ir,ip),fb(ip,iw,ik),dlati(ir)
@@ -3290,6 +3303,9 @@ end function hden
 
 !-----------------------------------------------------------------------
 subroutine lintp(xx,yy,n,x,y)
+
+  use ModUtilities, ONLY: CON_stop
+
   !-----------------------------------------------------------------------
   !  Routine does 1-D interpolation.  xx must be increasing or decreasing
   !  monotonically.  x is between xx(j) and xx(j+1)
@@ -3503,6 +3519,9 @@ end subroutine lintp4
 
 !--------------------------------------------------------------------------
 subroutine locate1(xx,n,x,j)
+
+  use ModUtilities, ONLY: CON_stop
+
   !--------------------------------------------------------------------------
   !  Routine return a value of j such that x is between xx(j) and xx(j+1).
   !  xx must be increasing or decreasing monotonically.

@@ -1,7 +1,10 @@
-Module ModRbSat
+module ModRbSat
+
+  use ModUtilities, ONLY: CON_stop
+  
   implicit none
   
-  logical :: DoWriteSats  = .false.  !!!DTW 2007                                                                                      
+  logical :: DoWriteSats  = .false.  !!!DTW 2007
   logical :: IsFirstWrite = .true.
   integer :: nRbSats = 0, iStartIter = 0
   real,               allocatable :: SatLoc_3I(:,:,:), SatFlux_II(:,:)
@@ -10,7 +13,7 @@ Module ModRbSat
   character(len=100), allocatable :: NameSat_I(:)
   
 contains
-    !===========================================================================
+  !===========================================================================
   subroutine write_rb_sat(iSatIn, nLat,nLon,nEnergy,nAngle,Flux_C)
     ! Write solution interpolated to satellite position to satellite files.
     use ModIoUnit,      ONLY: UnitTmp_
@@ -88,7 +91,8 @@ contains
     if ( (.not.IsExist) .or. IsFirstWrite ) then
        IsFirstWrite = .false.
        HeadVar = 'it year mo dy hr mn sc msc X Y Z'
-       open(unit=UnitTmp_, file=trim(NameSatFile), status='replace', iostat=iError)
+       open(unit=UnitTmp_, file=trim(NameSatFile), status='replace', &
+            iostat=iError)
        if(iError /= 0) call CON_stop &
             (NameSubSub//' Error opening file '//NameSatFile)
        if (iSatIn == 1) then
@@ -110,7 +114,6 @@ contains
     end if
 
     ! Collect variables.
-
 
     ! Get satellite location in generalized coordinates.
     ! and interpolate flux to satellite location
@@ -198,6 +201,7 @@ contains
     close(UnitTmp_)
 
   end subroutine write_rb_sat
-
-end Module ModRbSat
+  !===========================================================================
+end module ModRbSat
+!=============================================================================
 

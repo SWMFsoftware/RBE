@@ -10,6 +10,8 @@ subroutine RB_set_parameters(NameAction)
   use ModRbTime
   use ModWriteTec, ONLY: DoWriteTec
   use ModPrerunField, ONLY:  DoWritePrerun, UsePrerun, DtRead
+  use ModUtilities, ONLY: CON_stop
+
   implicit none
 
   character (len=100)           :: NameCommand
@@ -101,7 +103,7 @@ subroutine RB_set_parameters(NameAction)
         elseif(NameSpecies == 'H')then
            js =2
         else
-           call con_stop('Error: Species not found')
+           call CON_stop('Error: Species not found')
         endif
      
      case('#STARTUPTIME')
@@ -118,7 +120,7 @@ subroutine RB_set_parameters(NameAction)
         elseif(NameModel == 'MHD')then
            iMod=3
         else
-           call con_stop('Error: Model not found') 
+           call CON_stop('Error: Model not found') 
         endif
         if (UseFixedB) then
            ires = 0
