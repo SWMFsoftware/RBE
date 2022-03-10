@@ -95,12 +95,12 @@ subroutine rbe_init
      write(outnameSep,    "(i4.4,2i2.2,'_',3i2.2)") iCurrentTime_I(1:6)
      write(outnameSepOrig,"(i4.4,2i2.2,'_',3i2.2)") iStartTime_I(1:6)
   endif
-  
+
   ! latitudes from Meredith as a function of L, MLT and Kp.
   call readChorusIntensity
   ! Read Horne's chorus pitch-angle and energy diffusion coeff 
   call readChorusDiffCoef
-  
+
   if (IsStandAlone) then
      call timing_start('rbe_grids')
      call grids(re,rc,xme,xmp,q,c,js)
@@ -125,7 +125,7 @@ subroutine rbe_init
   call timing_stop('rbe_vdrift')
   call timing_start('rbe_boundary')
   call boundary(t,tstart,f2,v,xjac,xmass,p,xktd,xnd,&
-     vswb0,xnswb0,itype,ibset,irm,irm0,iba)
+       vswb0,xnswb0,itype,ibset,irm,irm0,iba)
   call timing_stop('rbe_boundary')
 
   ! Setup for the plasmasphere model
@@ -179,6 +179,7 @@ subroutine rbe_run
   use ModChorusIntensity
   use ModWpower
   use ModIoUnit, ONLY: UnitTmp_
+  use ModUtilities, ONLY: open_file, close_file
   use ModRbTime
   use ModTimeConvert, ONLY: time_real_to_int
   use ModPrerunField, ONLY: UsePrerun, read_prerun, read_prerun_IE
@@ -190,7 +191,7 @@ subroutine rbe_run
      call fieldpara(t,dt,c,q,rc,re,xlati,&
           xmlt,phi,w,si,xmass,xme,xmp)
      call boundary(t,tstart,f2,v,xjac,xmass,p,xktd,xnd,&
-     vswb0,xnswb0,itype,ibset,irm,irm0,iba)
+          vswb0,xnswb0,itype,ibset,irm,irm0,iba)
      call E_change(f2,d4,ekev,elb,eub,e_l,ecbf,iba,iw1,iw2)
      if (iplsp.eq.1) then
         call RB_setfluxtubevol(colat,ir,xmltd,ip,volume)
@@ -204,7 +205,7 @@ subroutine rbe_run
           rc,xnsw0,vsw0,Bx0,By0,Bz0)
      call Vdrift(re,rc,xme,dphi,xlati,ekev,potent,js,irm,iw1,iw2)
      call boundary(t,tstart,f2,v,xjac,xmass,p,xktd,xnd,&
-     vswb0,xnswb0,itype,ibset,irm,irm0,iba)
+          vswb0,xnswb0,itype,ibset,irm,irm0,iba)
   endif
 
   if (t.ge.tstart) then
@@ -216,7 +217,7 @@ subroutine rbe_run
           dt,CHpower,ompe,cLshell,ompea,ckeV,cPA,cDaa,iba,iw1,iw2)
      call E_change(f2,d4,ekev,elb,eub,e_l,ecce,iba,iw1,iw2)
   endif
-  
+
   call drift(t,dt,f2,vl,vp,ro,rb,fb,dlati,dphi,iba,iw1,iw2,irm)
   call E_change(f2,d4,ekev,elb,eub,e_l,ecdt,iba,iw1,iw2)
   call losscone(f2,tcone,rmir,rc,iba,iw1,iw2)
@@ -242,7 +243,7 @@ subroutine rbe_run
      call fieldpara(t,dt,c,q,rc,re,xlati,&
           xmlt,phi,w,si,xmass,xme,xmp)
      call boundary(t,tstart,f2,v,xjac,xmass,p,xktd,xnd,&
-     vswb0,xnswb0,itype,ibset,irm,irm0,iba)
+          vswb0,xnswb0,itype,ibset,irm,irm0,iba)
      call E_change(f2,d4,ekev,elb,eub,e_l,ecbf,iba,iw1,iw2)
      if (iplsp.eq.1) then
         call RB_setfluxtubevol(colat,ir,xmltd,ip,volume)
@@ -256,7 +257,7 @@ subroutine rbe_run
   call Vdrift(re,rc,xme,dphi,xlati,ekev,potent,js,irm,iw1,iw2)
 
   call boundary(t,tstart,f2,v,xjac,xmass,p,xktd,xnd,&
-     vswb0,xnswb0,itype,ibset,irm,irm0,iba)
+       vswb0,xnswb0,itype,ibset,irm,irm0,iba)
 
   if (js.eq.2) then
      call charexchange(f2,achar,iba,iw1,iw2)  
@@ -301,14 +302,14 @@ subroutine rbe_run
           call rbe_save_result(.true. .and. IsStandAlone, .true.)
   end if
 
-  open(unit=UnitTmp_,file='RB/rbe_swmf.log')
+  call open_file(file='RB/rbe_swmf.log')
   if (UseSeparatePlotFiles) then
      write(UnitTmp_,'(a)') outnameSep
   else
      write(UnitTmp_,'(a8)') outname
   endif
   write(UnitTmp_,*) 'istep, t(hour)   ',istep,t/3600. 
-  close(UnitTmp_)
+  call close_file
 
 end subroutine rbe_run
 
@@ -352,6 +353,7 @@ subroutine readInputData
   use rbe_cread2
   use rbe_io_unit
   use ModIoUnit, ONLY: UnitTmp_, io_unit_new
+  use ModUtilities, ONLY: open_file, close_file
   use ModUtilities, ONLY: CON_stop
 
   real:: bxw1(nswmax),byw1(nswmax),bzw1(nswmax),xnsw1(nswmax),vsw1(nswmax)
@@ -374,11 +376,11 @@ subroutine readInputData
   hlosscone=100.                 ! loss cone altitude in km
 
   rc=(re+abs(hlosscone)*1000.)/re  ! losscone in Re
-  
-!  if (mod(tf,dt).ne.0.) then
-!     write(*,*) 'RBE ERROR: mod(tf,dt).ne.0.'
-!     call CON_stop('RBE ERROR')
-!  endif
+
+  !  if (mod(tf,dt).ne.0.) then
+  !     write(*,*) 'RBE ERROR: mod(tf,dt).ne.0.'
+  !     call CON_stop('RBE ERROR')
+  !  endif
 
   if (itype.eq.2) trans=0.
   nstep=ifix((tmax-tstart)/dt/2.+0.5)
@@ -406,10 +408,10 @@ subroutine readInputData
 
   !.....open file to read the SW-IMF data   
   if (.not. UseGm)then
-     open(unit=UnitTmp_,file='RB/'//storm//'.SWIMF',status='old')
+     call open_file(file='RB/'//storm//'.SWIMF',status='old')
      read(UnitTmp_,*) iyear,iday,ihour        ! time corresponding to t=0
      read(UnitTmp_,*) swlag    ! time in sec for sw travel from s/c to subsolar point
-     
+
      read(UnitTmp_,*) nsw
      read(UnitTmp_,'(a80)') header
      j=1
@@ -433,7 +435,7 @@ subroutine readInputData
            vswa(i)=vswa(i)+vsw1(j)/(j2-j1+1)
         enddo
      enddo
-     
+
      read(UnitTmp_,*) nimf
      if (nsw.gt.nswmax.or.nimf.gt.nswmax) then
         write(6,*) 'RBE Error: nsw.gt.nswmax.or.nimf.gt.nswmax'
@@ -463,10 +465,10 @@ subroutine readInputData
            bzw(i)=bzw(i)+bzw1(j)/(j2-j1+1)
         enddo
      enddo
-     close(UnitTmp_)
-     
+     call close_file
+
      ! Read Dst (symH) and Kp data
-     open(unit=UnitTmp_,file='RB/'//storm//'.symHKp',status='old')
+     call open_file(file='RB/'//storm//'.symHKp',status='old')
      read(UnitTmp_,*) nhour
      ndst=nhour*60                      ! 1-minute resolution         
      if (ndst.gt.ndstmax) then
@@ -503,7 +505,7 @@ subroutine readInputData
            xKph(m)=float(Kp8(k))+dKp
         enddo
      enddo
-     close(UnitTmp_)
+     call close_file
   endif
 end subroutine readInputData
 !*****************************************************************************
@@ -511,146 +513,147 @@ end subroutine readInputData
 !  Routine reads lower band chorus (0.1fce < f < 0.5fce) wave intensity at low
 !  latitudes from Meredith as a function of L, MLT and Kp.
 !*****************************************************************************
-      subroutine readChorusIntensity
-      use rbe_grid
-      use ModIoUnit, ONLY: UnitTmp_
-      use ModChorusIntensity
-      parameter (irw1=70)
-      real wLshell1(irw1)
-      character header*80
-      !------------------------------------------------------------------------
-      
-      nav=irw1/irw
-      
-      do i=1,irw1
-         wLshell1(i)=(i-1)*0.1+1.05       ! L = 1.05 - 7.95
-      enddo
-      do j=1,ipw
-         wmlt(j)=(j-1)*1.+0.5            ! mlt = 0.5 - 23.5
-      enddo
+subroutine readChorusIntensity
+  use rbe_grid
+  use ModIoUnit, ONLY: UnitTmp_
+  use ModUtilities, ONLY: open_file, close_file
+  use ModChorusIntensity
+  parameter (irw1=70)
+  real wLshell1(irw1)
+  character header*80
+  !------------------------------------------------------------------------
 
- ! Calculate wLshell by averaging over wLshell
-      do i=1,irw
-         i1=1+(i-1)*nav
-         i2=i1+nav-1
-         wLshell(i)=sum(wLshell1(i1:i2))/nav
-      enddo
+  nav=irw1/irw
 
-! Read and average the wave intensity data
-      open(unit=UnitTmp_,file='RB/B_wave_eq.dat',status='old')
-      read(UnitTmp_,'(a80)') header
-      read(UnitTmp_,'(a80)') header
-      do k=1,3       ! k=1: Kp < 2,  k=2: 2 <= Kp < 4,  k=3: Kp >= 4
-         do n=1,9
-            read(UnitTmp_,'(a80)') header
-         enddo
-         do j=1,ipw
-            do i=1,irw
-               rB_wave=0.
-               do ii=1,nav
-                  read(UnitTmp_,*) rmlt,rl,rB_wave1
-                  if (rB_wave1.eq.99999.0) rB_wave1=0.0
-                  rB_wave=rB_wave+rB_wave1
-               enddo
-               chorusI(i,j,k)=rB_wave/nav     ! wave intensity in pT^2
-            enddo
-         enddo
-      enddo
-      close(UnitTmp_)
- 
-      return
-    end subroutine readChorusIntensity
+  do i=1,irw1
+     wLshell1(i)=(i-1)*0.1+1.05       ! L = 1.05 - 7.95
+  enddo
+  do j=1,ipw
+     wmlt(j)=(j-1)*1.+0.5            ! mlt = 0.5 - 23.5
+  enddo
+
+  ! Calculate wLshell by averaging over wLshell
+  do i=1,irw
+     i1=1+(i-1)*nav
+     i2=i1+nav-1
+     wLshell(i)=sum(wLshell1(i1:i2))/nav
+  enddo
+
+  ! Read and average the wave intensity data
+  call open_file(file='RB/B_wave_eq.dat',status='old')
+  read(UnitTmp_,'(a80)') header
+  read(UnitTmp_,'(a80)') header
+  do k=1,3       ! k=1: Kp < 2,  k=2: 2 <= Kp < 4,  k=3: Kp >= 4
+     do n=1,9
+        read(UnitTmp_,'(a80)') header
+     enddo
+     do j=1,ipw
+        do i=1,irw
+           rB_wave=0.
+           do ii=1,nav
+              read(UnitTmp_,*) rmlt,rl,rB_wave1
+              if (rB_wave1.eq.99999.0) rB_wave1=0.0
+              rB_wave=rB_wave+rB_wave1
+           enddo
+           chorusI(i,j,k)=rB_wave/nav     ! wave intensity in pT^2
+        enddo
+     enddo
+  enddo
+  call close_file
+
+end subroutine readChorusIntensity
 
 
 !*****************************************************************************
 !                           readChorusDiffCoef
 !  Routine reads Horne's chorus pitch-angle and energy diffusion coeff.
 !*****************************************************************************
-      subroutine readChorusDiffCoef
-      use rbe_grid
-      use ModIoUnit, ONLY: UnitTmp_
-      use ModChorusDiffCoef
-      real xx(ipa),yya(ipa),yye(ipa)
-      character header*111,lhead(irc)*5,dhead(ipe)*5,ehead(iwc)*6
- 
-!     pitch angles from L shell = 6.5
-      cPA(1:ipa)=(/ 0.,2.58258,3.55388,4.52518,5.49649,6.46779,7.43910,&
-                  8.41040,9.38171,10.35301,11.32432,12.29562,13.26693,&
-                  14.23823,15.20954,16.18084,17.15215,18.12345,19.09476,&
-                  20.06606,21.03736,22.00867,22.97997,23.95128,24.92258,&
-                  25.89389,26.86519,27.83650,28.80780,29.77911,30.75041,&
-                  31.72172,32.69302,33.66433,34.63563,35.60694,36.57824,&
-                  37.54955,38.52085,39.49215,40.46346,41.43476,42.40607,&
-                  43.37737,44.34868,45.31998,46.29129,47.26259,48.23390,&
-                  49.20520,50.17651,51.14781,52.11912,53.09042,54.06173,&
-                  55.03303,56.00433,56.97564,57.94694,58.91825,59.88955,&
-                  60.86086,61.83216,62.80347,63.77477,64.74608,65.71738,&
-                  66.68869,67.65999,68.63130,69.60260,70.57391,71.54521,&
-                  72.51652,73.48782,74.45912,75.43043,76.40173,77.37304,&
-                  78.34434,79.31565,80.28695,81.25826,82.22956,83.20087,&
-                  84.17217,85.14348,86.11478,87.08609,88.05739,89.02870 /)
- 
-      cLshell(1:irc)=(/2.5,3.5,4.5,5.5,6.5/)            ! L shell
-      ompea(1:ipe)=(/1.5,2.5,5.,7.5,10./)               ! ratio of fpe/fpc
-      ckeV(1:iwc)=(/10.,30.,100.,300.,1000.,3000./)     ! electron energy in keV
+subroutine readChorusDiffCoef
+  use rbe_grid
+  use ModIoUnit, ONLY: UnitTmp_
+  use ModUtilities, ONLY: open_file, close_file
+  use ModChorusDiffCoef
+  real xx(ipa),yya(ipa),yye(ipa)
+  character header*111,lhead(irc)*5,dhead(ipe)*5,ehead(iwc)*6
 
-! File heads
-      do i=1,irc
-         write(lhead(i),'("_l",f3.1)') cLshell(i)
-      enddo
-      do i=1,ipe
-         if (ompea(i).ne.5..and.ompea(i).ne.10.) &
-             write(dhead(i),'("_d",f3.1)') ompea(i)
-         if (ompea(i).eq.5.) write(dhead(i),'("_d",i1)') ifix(ompea(i))
-         if (ompea(i).eq.10.) write(dhead(i),'("_d",i2)') ifix(ompea(i))
-      enddo
-      do i=1,iwc
-         if (ckeV(i).lt.100.) write(ehead(i),'("_e",i2)') ifix(ckeV(i))
-         if (ckeV(i).ge.100..and.ckeV(i).lt.1000.) &
-             write(ehead(i),'("_e",i3)') ifix(ckeV(i))
-         if (ckeV(i).ge.1000.) write(ehead(i),'("_e",i4)') ifix(ckeV(i))
-      enddo
- 
-! Read Daa, DEE and map to the cPA grid.
-      do i=1,irc
-         do j=1,ipe 
-            do k=1,iwc 
+  !     pitch angles from L shell = 6.5
+  cPA(1:ipa)=(/ 0.,2.58258,3.55388,4.52518,5.49649,6.46779,7.43910,&
+       8.41040,9.38171,10.35301,11.32432,12.29562,13.26693,&
+       14.23823,15.20954,16.18084,17.15215,18.12345,19.09476,&
+       20.06606,21.03736,22.00867,22.97997,23.95128,24.92258,&
+       25.89389,26.86519,27.83650,28.80780,29.77911,30.75041,&
+       31.72172,32.69302,33.66433,34.63563,35.60694,36.57824,&
+       37.54955,38.52085,39.49215,40.46346,41.43476,42.40607,&
+       43.37737,44.34868,45.31998,46.29129,47.26259,48.23390,&
+       49.20520,50.17651,51.14781,52.11912,53.09042,54.06173,&
+       55.03303,56.00433,56.97564,57.94694,58.91825,59.88955,&
+       60.86086,61.83216,62.80347,63.77477,64.74608,65.71738,&
+       66.68869,67.65999,68.63130,69.60260,70.57391,71.54521,&
+       72.51652,73.48782,74.45912,75.43043,76.40173,77.37304,&
+       78.34434,79.31565,80.28695,81.25826,82.22956,83.20087,&
+       84.17217,85.14348,86.11478,87.08609,88.05739,89.02870 /)
 
-               ! read daa, dee
-               open(unit=UnitTmp_,file='RB/Horne_chorus/fb'//lhead(i)//trim(dhead(j))//&
-                    trim(ehead(k))//'.out',status='old')
-               do n=1,24
-                  read(UnitTmp_,'(a111)') header
-               enddo
-               do m=1,ipa
-                  read(UnitTmp_,*) pa,daa,dae,dee,dap,dpp,rmirror
-                  if (i.eq.irc) then       ! at L=6.5, no interpolation 
-                     cDaa(i,j,k,m)=daa
-                     cDEE(i,j,k,m)=dee
-                  else
-                     xx(m) =pa
-                     yya(m)=daa
-                     yye(m)=dee
-                  endif
-               enddo
-               close(UnitTmp_)
+  cLshell(1:irc)=(/2.5,3.5,4.5,5.5,6.5/)            ! L shell
+  ompea(1:ipe)=(/1.5,2.5,5.,7.5,10./)               ! ratio of fpe/fpc
+  ckeV(1:iwc)=(/10.,30.,100.,300.,1000.,3000./)     ! electron energy in keV
 
-               ! Interpolation of Daa, Dee for other L-shells
-               if (i.lt.irc) then
-                  do m=1,ipa
-                     call lintp(xx,yya,ipa,cPA(m),ym)
-                      cDaa(i,j,k,m)=ym   ! Daa for wave amplitude of 100 pT
-                     call lintp(xx,yye,ipa,cPA(m),ym)
-                     cDEE(i,j,k,m)=ym   ! DEE for wave amplitude of 100 pT
-                  enddo
-               endif
+  ! File heads
+  do i=1,irc
+     write(lhead(i),'("_l",f3.1)') cLshell(i)
+  enddo
+  do i=1,ipe
+     if (ompea(i).ne.5..and.ompea(i).ne.10.) &
+          write(dhead(i),'("_d",f3.1)') ompea(i)
+     if (ompea(i).eq.5.) write(dhead(i),'("_d",i1)') ifix(ompea(i))
+     if (ompea(i).eq.10.) write(dhead(i),'("_d",i2)') ifix(ompea(i))
+  enddo
+  do i=1,iwc
+     if (ckeV(i).lt.100.) write(ehead(i),'("_e",i2)') ifix(ckeV(i))
+     if (ckeV(i).ge.100..and.ckeV(i).lt.1000.) &
+          write(ehead(i),'("_e",i3)') ifix(ckeV(i))
+     if (ckeV(i).ge.1000.) write(ehead(i),'("_e",i4)') ifix(ckeV(i))
+  enddo
 
-            enddo
-         enddo
-      enddo
- 
-      return
-    end subroutine readChorusDiffCoef
+  ! Read Daa, DEE and map to the cPA grid.
+  do i=1,irc
+     do j=1,ipe 
+        do k=1,iwc 
+
+           ! read daa, dee
+           call open_file( &
+                FILE='RB/Horne_chorus/fb'//lhead(i)//trim(dhead(j))//&
+                trim(ehead(k))//'.out', STATUS='old')
+           do n=1,24
+              read(UnitTmp_,'(a111)') header
+           enddo
+           do m=1,ipa
+              read(UnitTmp_,*) pa,daa,dae,dee,dap,dpp,rmirror
+              if (i.eq.irc) then       ! at L=6.5, no interpolation 
+                 cDaa(i,j,k,m)=daa
+                 cDEE(i,j,k,m)=dee
+              else
+                 xx(m) =pa
+                 yya(m)=daa
+                 yye(m)=dee
+              endif
+           enddo
+           call close_file
+
+           ! Interpolation of Daa, Dee for other L-shells
+           if (i.lt.irc) then
+              do m=1,ipa
+                 call lintp(xx,yya,ipa,cPA(m),ym)
+                 cDaa(i,j,k,m)=ym   ! Daa for wave amplitude of 100 pT
+                 call lintp(xx,yye,ipa,cPA(m),ym)
+                 cDEE(i,j,k,m)=ym   ! DEE for wave amplitude of 100 pT
+              enddo
+           endif
+
+        enddo
+     enddo
+  enddo
+
+end subroutine readChorusDiffCoef
 
 !***********************************************************************
 !                        grids
@@ -823,12 +826,12 @@ subroutine fieldpara(t,dt,c,q,rc,re,xlati,xmlt,phi,w,si,&
 
   ! Save irm0
   irm0(1:ip)=irm(1:ip)
-  
+
   if (imod <= 2) then
      !  Determine parmod
      call TsyParmod(t,tf,tsw,xnswa,vswa,nsw,tdst,dsth,ndst,timf,byw,bzw,&
           nimf,xmp,imod,parmod)
-     
+
      !  Call recalc to calculate the dipole tilt
      isec=mod(ifix(t),60)
      min1=ifix(t)/60
@@ -853,7 +856,7 @@ subroutine fieldpara(t,dt,c,q,rc,re,xlati,xmlt,phi,w,si,&
         xlati1=xlati(i)
         xli(i)=rc/cos(xlati1)/cos(xlati1)
         phi1=phi(j)+pi                  ! +x corresponing to noon
-        
+
         if (imod.le.2) call tsy_trace(i,rlim,re,rc,xlati1,phi1,t,ps,parmod,&
              imod,np,npf1,dssa,bba,volume1,ro1,xmlt1,bo1,ra)
         if (imod.eq.3) call MHD_trace(xlati1,phi(j),re,i,j,np, &
@@ -863,7 +866,7 @@ subroutine fieldpara(t,dt,c,q,rc,re,xlati,xmlt,phi,w,si,&
            irm(j)=i-1
            exit LATITUDE                   ! do next j                 
         endif
-        
+
         if (i==iLatTest .and. j==iLonTest) then
            write(*,*) npf1,xlati1*180.0/3.14,xmlt1,ro1
            call RB_plot_fieldline(npf1,i,j,dssa,ra,bba) 
@@ -877,12 +880,12 @@ subroutine fieldpara(t,dt,c,q,rc,re,xlati,xmlt,phi,w,si,&
         xmlto(i,j)=xmlt1
         bo(i,j)=bo1
         phi1=xmlt1*pi/12.+pi         ! phi1=0 corresponing to noon
-        
+
         xo(i,j)=ro1*cos(phi1)
         yo(i,j)=ro1*sin(phi1)
         gridoc(i,j)=1.
         if (npf1.eq.0) gridoc(i,j)=0.
-        
+
         !xmlto(i,j)=xmlt_1
         !if (j.gt.1.and.xmlto(i,j).lt.0.) xmlto(i,j)=xmlto(i,j)+24.
         !ro(i,j)=ra(ieq)
@@ -891,13 +894,13 @@ subroutine fieldpara(t,dt,c,q,rc,re,xlati,xmlt,phi,w,si,&
         !yo(i,j)=ya(ieq)
         !if (iout.ge.1) gridoc(i,j)=0.
         !if (iout.eq.0) gridoc(i,j)=1.
-        
+
         if (xmlt1.gt.xmltlim.and.xmlt1.lt.(24.-xmltlim).and.&
              abs(xmlt1-xmlt(j)).gt.xmltlim) then   ! big warping in mlt
            irm(j)=i-1
            exit LATITUDE
         endif
-        
+
         ! Excessively long lines are considered open 
         if (dssa(npf1) > LengthMax) then
            irm(j)=i-1
@@ -959,7 +962,7 @@ subroutine fieldpara(t,dt,c,q,rc,re,xlati,xmlt,phi,w,si,&
         !  rm(1)                       rm(m)                               rm(n+1)
         !  bm(1)                       bm(m)                               bm(n+1)
 
-        
+
         ! Field line integration using Taylor expansion method
         call timing_start('rbe_taylor')
         sumBn(0:nTaylor)=0.
@@ -974,8 +977,8 @@ subroutine fieldpara(t,dt,c,q,rc,re,xlati,xmlt,phi,w,si,&
               endif
            enddo SEARCH
            n7=n8-1
-           
-                      
+
+
            ! field line integration at the northern hemisphere
            bs_n=1.
            do iTaylor=0,nTaylor
@@ -1023,7 +1026,7 @@ subroutine fieldpara(t,dt,c,q,rc,re,xlati,xmlt,phi,w,si,&
            bm_n=1.
            do iTaylor=0,nTaylor
               BnIbm_n=BnI(iTaylor,m)/bm_n
-              
+
               ! ss = int_s(1)^s(m) sqrt(B(m)-B(s)) ds
               ss=ss+a_I(iTaylor)*BnIbm_n
               ! ss1 = int_s(1)^s(m) 1/sqrt(B(m)-B(s)) ds              
@@ -1104,7 +1107,7 @@ subroutine fieldpara(t,dt,c,q,rc,re,xlati,xmlt,phi,w,si,&
                  gamma(i,j,k,m)=c2m/c2mo
                  p(i,j,k,m)=pijkm  
                  v(i,j,k,m)=pc*c/c2m
-!                 write(*,*)'!!!!tcone1,v(i,j,k,m)',tcone1,v(i,j,k,m)
+                 !                 write(*,*)'!!!!tcone1,v(i,j,k,m)',tcone1,v(i,j,k,m)
                  tcone2=tcone1/v(i,j,k,m)      ! Tbounce/2
                  x=dt/tcone2
                  tcone(i,j,k,m)=0. 
@@ -1121,16 +1124,16 @@ subroutine fieldpara(t,dt,c,q,rc,re,xlati,xmlt,phi,w,si,&
      irm(j)=irm(j)-1
   enddo
 
-!  ! Find iba
-!  do j=1,ip
-!     do i=1,irm(j)
-!        x1(i)=ro(i,j)
-!     enddo
-!     call locate1(x1,irm(j),rb,ib)
-!     iba(j)=ib
-!  enddo
-!
-!    ! Find iba
+  !  ! Find iba
+  !  do j=1,ip
+  !     do i=1,irm(j)
+  !        x1(i)=ro(i,j)
+  !     enddo
+  !     call locate1(x1,irm(j),rb,ib)
+  !     iba(j)=ib
+  !  enddo
+  !
+  !    ! Find iba
   if (UseEllipse) then
      R_24=rb                 ! boundary distance at midnight
      do j=1,ip
@@ -1650,7 +1653,7 @@ subroutine convection(t,tstart,xlati,phi,&
   use rbe_convect
   use rbe_cread2,ONLY:nimf,timf,&
        bxw,byw,bzw,nsw,tsw,xnswa,vswa,iconvect,itype,UseGm,UseIe
-  
+
   real xlati(ir),phi(ip)
   logical UseAL
 
@@ -1713,7 +1716,7 @@ subroutine convection(t,tstart,xlati,phi,&
         enddo
      enddo
   end if
-!  potent(0:ir+1,ip+1)=potent(0:ir+1,1)      ! periodic boundary condition
+  !  potent(0:ir+1,ip+1)=potent(0:ir+1,1)      ! periodic boundary condition
 
 end subroutine convection
 
@@ -1730,7 +1733,7 @@ end subroutine convection
 subroutine Vdrift(re,rc,xme,dphi,xlati,ekev,potent,js,irm,iw1,iw2)
   use rbe_cvdrift
   use ModNumConst, ONLY: pi => cPi
-  
+
   real xlati(ir),ekev(ir,ip,iw,ik),potent(ir,ip),ham(ir,ip), kfactor
   integer iw1(ik),iw2(ik),irm(ip)
 
@@ -1751,7 +1754,7 @@ subroutine Vdrift(re,rc,xme,dphi,xlati,ekev,potent,js,irm,iw1,iw2)
               ham(i,j)=icharge*ekev(i,j,k,m)*1000.+potent(i,j)
            enddo
         enddo
-        
+
         ! calculate drift velocities vl and vp
         do i=1,ir-1
            i_1=i-1
@@ -1765,7 +1768,7 @@ subroutine Vdrift(re,rc,xme,dphi,xlati,ekev,potent,js,irm,iw1,iw2)
               if (j0.lt.1) j0=j0+ip
               j2=j+1
               if (j2.gt.ip) j2=j2-ip
-              
+
               ! calculate vl
               if (irm(j0).ge.i.and.irm(j2).ge.i) then
                  sf0=0.5*(ham(i+1,j0)+ham(i,j0))
@@ -1774,7 +1777,7 @@ subroutine Vdrift(re,rc,xme,dphi,xlati,ekev,potent,js,irm,iw1,iw2)
               else
                  vl(i,j,k,m)=vl(i-1,j,k,m)
               endif
-              
+
               ! calculate vp
               if (irm(j2).ge.i.and.irm(j).ge.i) then
                  sf0=0.5*(ham(i_1,j2)+ham(i_1,j))
@@ -1788,7 +1791,7 @@ subroutine Vdrift(re,rc,xme,dphi,xlati,ekev,potent,js,irm,iw1,iw2)
      end do            ! end of k loop
   end do               ! end of m loop            
 
-  
+
 end subroutine Vdrift
 
 
@@ -1802,6 +1805,7 @@ subroutine initial(itype,ekev,xjac,ro,gride,c,xmass,d4,js,irm,&
   use rbe_cinitial
   use rbe_io_unit, ONLY: iUnit1, iUnit2
   use ModIoUnit, ONLY: UnitTmp_
+  use ModUtilities, ONLY: open_file, close_file
   use ModNumConst, ONLY: pi => cPi
   use rbe_cread1
 
@@ -1907,12 +1911,12 @@ subroutine initial(itype,ekev,xjac,ro,gride,c,xmass,d4,js,irm,&
   enddo
   if (itype.eq.1) then
      if(UseSeparatePlotFiles) then
-        open(unit=UnitTmp_,file='RB/'//outnameSepOrig//st2//'.ec')
+        call open_file(file='RB/'//outnameSepOrig//st2//'.ec')
      else
-        open(unit=UnitTmp_,file='RB/'//outname//st2//'.ec')
+        call open_file(file='RB/'//outname//st2//'.ec')
      end if
      write(UnitTmp_,*) elb,eub,'      ! elb,eub'
-     close(UnitTmp_)
+     call close_file
   else
      read(iUnit2) ecbf
      read(iUnit2) ecdt
@@ -1931,10 +1935,11 @@ end subroutine initial
 !***************************************************************************
 subroutine boundary(t,tstart,f2,v,xjac,xmass,p,xktd,xnd,&
      vswb0,xnswb0,itype,ibset,irm,irm0,iba)
-  
+
   use rbe_cboundary
   use rbe_cread2,  ONLY:js,tsw,xnswa,vswa,nsw,UseGm,tint, UseMhdBoundary
   use ModIoUnit,   ONLY: UnitTmp_
+  use ModUtilities, ONLY: open_file, close_file
   use ModNumConst, ONLY: pi => cPi
   use rbe_cread1
   use ModGmRb,     ONLY: StateBmin_IIV,AveDens_,AveP_
@@ -1993,10 +1998,10 @@ subroutine boundary(t,tstart,f2,v,xjac,xmass,p,xktd,xnd,&
      ib=iba(j)
      ib1=ib+1
      if (ib1.gt.irm(j)) ib1=irm(j)
-     
+
      ! If using MHD values for boundary, set factors
      if (UseMhdBoundary) then
-         xktn = &
+        xktn = &
              StateBmin_IIV(irm(j),j,AveP_)&
              / StateBmin_IIV(irm(j),j,AveDens_) *6.2415e15 !J-->KeV 
         xnn  = StateBmin_IIV(irm(j),j,AveDens_)
@@ -2005,7 +2010,7 @@ subroutine boundary(t,tstart,f2,v,xjac,xmass,p,xktd,xnd,&
         if (ibset.eq.4) factorn=xnn*exp(gammln(xk1))/exp(gammln(xk2))/&
              (2.*pi*xkappa*xmass(js)*xktn*1.6e-16)**1.5
      endif
-     
+
      do m=1,ik
         do k=1,iw
            if (ibset.eq.3) then               ! Maxwellian
@@ -2025,7 +2030,7 @@ subroutine boundary(t,tstart,f2,v,xjac,xmass,p,xktd,xnd,&
                       t,i,j,irm0(j),ib
               enddo
            endif
-           
+
            do i=ib+1,irm(j)
               f2(i,j,k,m)=fbb*xjac(i,k)    ! psd=fb between ib and irm
            enddo
@@ -2035,37 +2040,37 @@ subroutine boundary(t,tstart,f2,v,xjac,xmass,p,xktd,xnd,&
         enddo                                 ! end of k loop
      enddo                                    ! end of m loop
   enddo                                       ! end of j loop
-  
+
   !  Write boundary condition in file outname_st2.bc
   xnn_cm3=xnn/1.e6
   if (t.ge.tstart) then
      thour=t/3600.
      if (itype.eq.1.and.t.eq.tstart) then
         if(UseSeparatePlotFiles) then
-           open(unit=UnitTmp_,file='RB/'//outnameSepOrig//st2//'.bc')
+           call open_file(file='RB/'//outnameSepOrig//st2//'.bc')
         else
-           open(unit=UnitTmp_,file='RB/'//outname//st2//'.bc')
+           call open_file(file='RB/'//outname//st2//'.bc')
         end if
         write(UnitTmp_,*)&
              '                   nightside BC           dayside BC'
         write(UnitTmp_,*) &
              '     t(hour)    n(cm^-3)    kT(keV)   n(cm^-3)    kT(keV)'
         write(UnitTmp_,'(f12.2,2(f11.4,f11.3))') thour,xnn_cm3,xktn,xnd,xktd
-        close(UnitTmp_)
+        call close_file
      elseif(iprint > 0)then
         if(mod(t,tint).eq.0.) then
            if(UseSeparatePlotFiles) then
-              open(unit=UnitTmp_,file='RB/'//outnameSepOrig//st2//'.bc')
+              call open_file(file='RB/'//outnameSepOrig//st2//'.bc')
            else
-              open(unit=UnitTmp_,file='RB/'//outname//st2//'.bc', &
+              call open_file(file='RB/'//outname//st2//'.bc', &
                    position='append')
            end if
            write(UnitTmp_,'(f12.2,2(f11.4,f11.3))') thour,xnn_cm3,xktn,xnd,xktd
-           close(UnitTmp_)
+           call close_file
         end if
      endif
   endif
-  
+
   ! Reset irm0
   irm0(1:ip)=irm(1:ip)
 end subroutine boundary
@@ -2084,6 +2089,7 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
   use rbe_cread1,ONLY: UseSeparatePlotFiles
   use rbe_cread2,ONLY: js,storm,DoSaveIe,NameRestartOutDir
   use ModIoUnit, ONLY: UnitTmp_
+  use ModUtilities, ONLY: open_file, close_file
   use ModNumConst, ONLY: pi => cPi
   use ModRbSat,    ONLY: write_rb_sat, nRbSats, DoWriteSats
   use rbe_cread1
@@ -2095,7 +2101,7 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
   real, intent(in):: t, tstart, rc, xnsw, vsw, Bx, By, Bz, vswb,xnswb
   integer, intent(in):: iw1(ik), iw2(ik), irm(ip), ntime, iprint, iplsp, itype
   logical, intent(in) :: DoSaveRestart, DoSavePlot
-  
+
   real:: hour, ro1
 
   real xlati(ir),ekev(ir,ip,iw,ik),y(ir,ip,0:ik+1),bo(ir,ip),&
@@ -2104,8 +2110,12 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
        flx(ir,ip,je,ig),ecbf(ir),ecdt(ir),eclc(ir),ecce(ir),&
        psd(ir,ip,iw,ik),ebound(je+1),density(ir,ip),parmod(10)
   integer::  iSat, i, j, k, m, iwh, ikh
+
+  character(len=*), parameter:: NameSub = 'p_result'
   !---------------------------------------------------------------------------
 
+  if(t <= 0.0) RETURN
+  
   hour=t/3600.
   do i=1,ir
      xlati1(i)=xlati(i)*180./pi   ! lat. at ionosphere in degree
@@ -2123,8 +2133,8 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
   ikh=ifix(0.5*(ik+1))
   if (DoSavePlot) then
      if (UseSeparatePlotFiles) then
-        open(unit=UnitTmp_,file='RB/plots/'//outnameSep//st2//'.fls',&
-             status='unknown')
+        call open_file(FILE='RB/plots/'//outnameSep//st2//'.fls',&
+             NameCaller=NameSub//':1')
         write(UnitTmp_,'(f10.5,5i6,"         ! rc(Re),ir,ip,je,ig,ntime")')&
              rc,ir,ip,je,ig,ntime
         write(UnitTmp_,'(6f9.3)') (gride(k),k=1,je)
@@ -2132,12 +2142,13 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
         write(UnitTmp_,'(6f9.5)') (gridy(m),m=1,ig)
         write(UnitTmp_,'(10f8.3)') (xlati1(i),i=1,ir)
         if (iprint.eq.1) then
-           close(UnitTmp_)
-           return
+           call close_file(NameCaller=NameSub//':1')
+           RETURN
         endif
      else
         if (t.eq.tstart) then
-           open(unit=UnitTmp_,file='RB/plots/'//outname//st2//'.fls',status='unknown')
+           call open_file(FILE='RB/plots/'//outname//st2//'.fls', &
+                status='unknown', NameCaller=NameSub//':2')
            !        open(unit=13,file=outname//st2//'.psd',status='unknown')
            write(UnitTmp_,'(f10.5,5i6,"         ! rc(Re),ir,ip,je,ig,ntime")')&
                 rc,ir,ip,je,ig,ntime
@@ -2145,19 +2156,14 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
            !     write(UnitTmp_,'(7f9.3)') (Ebound(k),k=1,je+1)
            write(UnitTmp_,'(6f9.5)') (gridy(m),m=1,ig)
            write(UnitTmp_,'(10f8.3)') (xlati1(i),i=1,ir)
-           !        write(13,'(f10.5,5i6,"         ! rc(Re),iwh,ikh,ir,ip,ntime")')
-           !    *         rc,iwh,ikh,ir,ip,ntime
-           !        write(13,'(1p,7e11.3)') (w(k),k=1,iw,2)
-           !        write(13,'(1p,7e11.3)') (si(m),m=1,ik,2)
-           !        write(13,'(10f8.3)') (xlati1(i),i=1,ir)
+
            if (iprint.eq.1) then
-              close(UnitTmp_)
-              !           close(13)
-              return
+              call close_file(NameCaller=NameSub//':2')
+              RETURN
            endif
         else                                                  ! in pbo_2.f
-           open(unit=UnitTmp_,file='RB/plots/'//outname//st2//'.fls',status='old',position='append')
-           !        open(unit=13,file=outname//st2//'.psd',status='old',position='append')
+           call open_file(FILE='RB/plots/'//outname//st2//'.fls', &
+                STATUS='old', POSITION='append', NameCaller=NameSub//':3')
         endif
      endif
   endif
@@ -2190,8 +2196,8 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
 
   ! Calculate and write fluxes at fixed E and y grides. 
   call fluxes(f,y,p,gridp,ekev,gride,gridy,irm,iw1,iw2,flx) 
-  if (DoSavePlot) write(UnitTmp_,'(f7.2,10f9.2,"   hour,parmod(1:10)")') hour,parmod         
-  !     write(13,'(1x,7hhour = ,f6.2,10f9.2,"   parmod(1:10)")') hour,parmod
+  if (DoSavePlot) &
+       write(UnitTmp_,'(f7.2,10f9.2,"   hour,parmod(1:10)")') hour,parmod
   do i=1,ir             ! Write fluxes @ fixed E & y grids
      do j=1,ip
         if (i.gt.irm(j)) then
@@ -2201,21 +2207,19 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
            density(i,j)=density(irm(j),j)
            flx(i,j,1:je,1:ig)=flx(irm(j),j,1:je,1:ig)
         endif
-        if (DoSavePlot) write(UnitTmp_,'(f7.2,f6.1,2f8.3,1pe11.3,0p,i5,1pe11.3)')&
+        if (DoSavePlot) &
+             write(UnitTmp_,'(f7.2,f6.1,2f8.3,1pe11.3,0p,i5,1pe11.3)')&
              xlati1(i),xmlt(j),ro(i,j),xmlto(i,j),bo(i,j),irm(j),density(i,j)
-        !           write(13,'(f7.2,f6.1,2f8.3,1pe11.3,0p,i5)')
-        !    *                xlati1(i),xmlt(j),ro(i,j),xmlto(i,j),bo(i,j),irm(j)
+
         if (DoSavePlot) then
            do k=1,je
               write(UnitTmp_,'(1p,12e11.3)') (flx(i,j,k,m),m=1,ig)
            enddo
         endif
-        !           do k=1,iw,2
-        !              write(13,'(1p,12e11.3)') (psd(i,j,k,m),m=1,ik,2)
-        !           enddo
+
      enddo
   enddo
-  if (DoSavePlot) close(UnitTmp_)
+  if (DoSavePlot) call close_file
   if (DoWriteTec .and. DoSavePlot) then
      call write_tec(t,flx,ebound)
   endif
@@ -2225,35 +2229,36 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
         call write_rb_sat(iSat,ir,ip,je,ig,flx)
      enddo
   endif
-  !     close(13)
 
   ! Write energy changes from various processes
   if (DoSavePlot) then
      if(UseSeparatePlotFiles) then
-        open(unit=UnitTmp_,file='RB/'//outnameSepOrig//st2//'.ec')
+        call open_file(file='RB/'//outnameSepOrig//st2//'.ec')
      else
-        open(unit=UnitTmp_,file='RB/'//outname//st2//'.ec',position='append')
+        call open_file(file='RB/'//outname//st2//'.ec',position='append')
      endif
      write(UnitTmp_,*) hour,'     ! hour'
-     write(UnitTmp_,*) '   i  ro(i,1)       ecbf          ecdt          ecce',&
+     write(UnitTmp_,*) &
+          '   i  ro(i,1)       ecbf          ecdt          ecce',&
           '          eclc'
      do i=1,ir
         ro1=ro(i,1)
-        write(UnitTmp_,'(i4,f9.2,1p,4e14.4)') i,ro1,ecbf(i),ecdt(i),ecce(i),eclc(i)
+        write(UnitTmp_,'(i4,f9.2,1p,4e14.4)') &
+             i,ro1,ecbf(i),ecdt(i),ecce(i),eclc(i)
      enddo
      write(UnitTmp_,'(8x,"total",1p,4e14.4)') &
           sum(ecbf),sum(ecdt),sum(ecce),sum(eclc)
-     close(UnitTmp_)
+     call close_file
   endif
 
   ! Open files to write all the information for continous run        
   if (DoSaveRestart) then
      if(UseSeparatePlotFiles)then
-        open(unit=UnitTmp_, &
+        call open_file( &
              file=trim(NameRestartOutDir)//'restart_rbe_c.f2',&
              form='unformatted')
      else
-        open(unit=UnitTmp_, &
+        call open_file( &
              file=trim(NameRestartOutDir)//outname//st2//'_c.f2', &
              form='unformatted')
      end if
@@ -2265,11 +2270,11 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
      write(UnitTmp_) ecdt
      write(UnitTmp_) eclc
      write(UnitTmp_) ecce
-     close(UnitTmp_)
-     
+     call close_file
+
      ! Write the restart.H file to be included at restart
-     open(unit=UnitTmp_,file=trim(NameRestartOutDir)//'restart.H')
-     
+     call open_file(file=trim(NameRestartOutDir)//'restart.H')
+
      write(UnitTmp_,'(a)') '#RESTART'
      write(UnitTmp_,'(a)') 'T'//cTab//cTab//cTab//'DoRestart'
      write(UnitTmp_,*)
@@ -2282,19 +2287,19 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
      write(UnitTmp_,'(a)') '#SPECIES'
      if (js == 1 ) write(UnitTmp_,'(a)') 'e'//cTab//cTab//cTab//'NameSpecies'
      if (js == 2 ) write(UnitTmp_,'(a)') 'H'//cTab//cTab//cTab//'NameSpecies'
-     
-     close(UnitTmp_)
+
+     call close_file
   endif
   if (iplsp.eq.1) call RB_saveplasmasphere(t,tstart,itype)
 
   ! Write to log file
   if (t.eq.tstart .and. DoSavePlot) write(*,'(a8)') outname
   if (DoSavePlot) write(*,*) 'RB: save plot at time = ',t/3600.,' hour'
-  
+
   ! Write the potential values
   if (DoSaveIe .and. DoSavePlot) call RB_plot_potential
-end subroutine p_result
 
+end subroutine p_result
 
 !***********************************************************************
 !                                fluxes
@@ -2612,14 +2617,14 @@ subroutine driftlp(t,dt1,f2,k,m,vl,cl,cp,ro,rb,fb,dlati,iba,irm,n)
 
   ! Update f2
   iup=0
-1  do j=1,ip
+1 do j=1,ip
      j_1=j-1
      if (j_1.lt.1) j_1=j_1+ip
      do i=2,iba(j)
         f2(i,j,k,m)=f(i,j)+dt1/dlati(i)*&
              (vl(i-1,j,k,m)*fal(i-1,j)-vl(i,j,k,m)*fal(i,j))+&
              cp(i,j_1)*fap(i,j_1)-cp(i,j)*fap(i,j)
-        
+
         if (f2(i,j,k,m).lt.0..and.f2(i,j,k,m).gt.-1.e-20) f2(i,j,k,m)=0.
         if (f2(i,j,k,m).lt.0.) then
            if (iup.eq.0) then
@@ -2778,7 +2783,7 @@ subroutine interFlux(cl,cp,f,fal,fap,fupl,fupp)
   real cl(ir,ip),cp(ir,ip),f(ir,ip),fal(ir,ip),fap(ir,ip),fupl(ir,ip),&
        fwbc(0:ir+2,ip),fupp(ir,ip)
   integer iba(ip)
-  
+
   fwbc(1:ir,1:ip)=f(1:ir,1:ip)        ! fwbc is f with boundary condition
 
   ! Set up boundary condition
@@ -2824,7 +2829,7 @@ subroutine interFlux(cl,cp,f,fal,fap,fupl,fupp)
         else
            flw=0.5*(1.+cp(i,j))*fwbc(i,j)+0.5*(1.-cp(i,j))*fwbc(i,j1)   ! LW
         end if
-!        flw=0.5*(1.+cp(i,j))*fwbc(i,j)+0.5*(1.-cp(i,j))*fwbc(i,j1)   ! LW
+        !        flw=0.5*(1.+cp(i,j))*fwbc(i,j)+0.5*(1.-cp(i,j))*fwbc(i,j1)   ! LW
         x=fwbc(i,j1)-fwbc(i,j)
         if (abs(x).le.1.e-27) fap(i,j)=fupp(i,j)
         if (abs(x).gt.1.e-27) then
@@ -2848,13 +2853,13 @@ subroutine interFlux(cl,cp,f,fal,fap,fupl,fupp)
 end subroutine InterFlux
 
 !*******************************************************************************
-  subroutine Wpower(t,density,tKp,xKph,chorusI,wLshell,wmlt,Bo,ro,xmlto,irm,nKp)
-!*******************************************************************************
-! Routine determines Chorus wave power (pT^2) and fpe/fce as a function of
-! location
-!
-! Input: t,density,tKp,xKph,chorusI,wLshell,wmlt,Bo,ro,xmlto,irm,nKp
-! Output: CHpower,ompe (through common block cWpower)
+subroutine Wpower(t,density,tKp,xKph,chorusI,wLshell,wmlt,Bo,ro,xmlto,irm,nKp)
+  !*******************************************************************************
+  ! Routine determines Chorus wave power (pT^2) and fpe/fce as a function of
+  ! location
+  !
+  ! Input: t,density,tKp,xKph,chorusI,wLshell,wmlt,Bo,ro,xmlto,irm,nKp
+  ! Output: CHpower,ompe (through common block cWpower)
 
   use rbe_grid
   use ModWpower
@@ -2869,7 +2874,7 @@ end subroutine InterFlux
   r_lo=1.5                 ! r lower boundary of Chorus diffusion
   r_up=6.5                 ! r upper boundary of Chorus diffusion
 
-! Determine Kp level in Chorus wave amplitude data provided by Meredith
+  ! Determine Kp level in Chorus wave amplitude data provided by Meredith
   call lintp(tKp,xKph,nKp,t,xKp)
   if (xKp.lt.2.) Kpl=1
   if (xKp.ge.2..and.xKp.lt.4.) Kpl=2
@@ -2879,7 +2884,7 @@ end subroutine InterFlux
   wmlt2(1:ipw)=wmlt(1:ipw)
   wmlt2(ipw+1)=wmlt(1)+24.
 
-! Determine the Chorus wave power, CHpower (in pT^2), and ompe (fpe/fce)
+  ! Determine the Chorus wave power, CHpower (in pT^2), and ompe (fpe/fce)
   CHpower=0.
   ompe=9999.         ! arbitrary big number
   do j=1,ip
@@ -2889,11 +2894,11 @@ end subroutine InterFlux
         xmlt1=xmlto(i,j)
         if (xmlt1.lt.wmlt(1)) xmlt1=xmlt1+24.
         if (ro1.ge.r_lo.and.ro1.le.r_up) call lintp2(wLshell,wmlt2, &
-           chorusI2,irw,ipw+1,ro1,xmlt1,CHpower(i,j))
+             chorusI2,irw,ipw+1,ro1,xmlt1,CHpower(i,j))
      enddo
   enddo
 
-  end subroutine Wpower
+end subroutine Wpower
 
 
 !****************************************************************************
@@ -2904,131 +2909,131 @@ end subroutine InterFlux
 !  Chorus wave amplitude data were provided by Meredith and electron-Chorus
 !  DEE is from Horne.
 !****************************************************************************
-      subroutine diffusee_E(f2,dt,y,bm,ekev,ro,w,xjac,CHpower,ompe,cLshell, &
-                            ompea,ckeV,cPA,cDEE,iw1,iw2,iba)
-      use rbe_grid
-      implicit none
-      real dt,pi,Eo,f2(ir,ip,iw,ik),fl(iw), &
-           xlam,alam,Wpower,Wpower0,r_wave,um(iw),up(iw), &
-           ompe1,ro1,PA1,cLshell(irc),ompea(ipe),CHpower(ir,ip),ompe(ir,ip),&
-           fr(iw),a1d(iw),b1d(iw),c1d(iw),ekev(ir,ip,iw,ik),ro(ir,ip),&
-           y(ir,ip,ik),ckeV(iwc),cPA(ipa),cDEE(irc,ipe,iwc,ipa),factor_1, &
-           factor1,gjac_1,gjac1,gjac(iw),E_1(iw),E1(iw),Em,Ep, &
-           DEEm,DEEp,DDm,DDp,u_mx,ump_mx,Enor(iw),dEn(iw),w(0:iw+1), &
-           WM_1,WM1,xjac(ir,iw),bm(ir,ip,ik),Wo
-      integer i,j,k,m,k1,k2,iww,iw1(ik),iw2(ik),iba(ip),irun,nrun,ier
+subroutine diffusee_E(f2,dt,y,bm,ekev,ro,w,xjac,CHpower,ompe,cLshell, &
+     ompea,ckeV,cPA,cDEE,iw1,iw2,iba)
+  use rbe_grid
+  implicit none
+  real dt,pi,Eo,f2(ir,ip,iw,ik),fl(iw), &
+       xlam,alam,Wpower,Wpower0,r_wave,um(iw),up(iw), &
+       ompe1,ro1,PA1,cLshell(irc),ompea(ipe),CHpower(ir,ip),ompe(ir,ip),&
+       fr(iw),a1d(iw),b1d(iw),c1d(iw),ekev(ir,ip,iw,ik),ro(ir,ip),&
+       y(ir,ip,ik),ckeV(iwc),cPA(ipa),cDEE(irc,ipe,iwc,ipa),factor_1, &
+       factor1,gjac_1,gjac1,gjac(iw),E_1(iw),E1(iw),Em,Ep, &
+       DEEm,DEEp,DDm,DDp,u_mx,ump_mx,Enor(iw),dEn(iw),w(0:iw+1), &
+       WM_1,WM1,xjac(ir,iw),bm(ir,ip,ik),Wo
+  integer i,j,k,m,k1,k2,iww,iw1(ik),iw2(ik),iba(ip),irun,nrun,ier
 
-      pi=acos(-1.)
-      Eo=511.                  ! electron rest energy in keV
-      xlam=0.5                 ! implicitness in solving diffusion equation
-      alam=1.-xlam
-      Wpower0=10000.           ! Horne's coeff based on wave power of 10000 pT^2
-      r_wave=3.         ! only consider wave-particle interaction at ro > r_wave
+  pi=acos(-1.)
+  Eo=511.                  ! electron rest energy in keV
+  xlam=0.5                 ! implicitness in solving diffusion equation
+  alam=1.-xlam
+  Wpower0=10000.           ! Horne's coeff based on wave power of 10000 pT^2
+  r_wave=3.         ! only consider wave-particle interaction at ro > r_wave
 
-      do j=1,ip
-         do i=1,iba(j)
-            ro1=ro(i,j)
-            Wpower=CHpower(i,j)
-            ompe1=ompe(i,j)                         ! fpe/fce
-            if (ompe1.lt.ompea(1)) ompe1=ompea(1)   ! min value of fpe/fce
+  do j=1,ip
+     do i=1,iba(j)
+        ro1=ro(i,j)
+        Wpower=CHpower(i,j)
+        ompe1=ompe(i,j)                         ! fpe/fce
+        if (ompe1.lt.ompea(1)) ompe1=ompea(1)   ! min value of fpe/fce
 
-            if (ro1.gt.r_wave.and.ompe1.le.ompea(ipe).and.Wpower.gt.0.) then
-               do m=1,ik
-                  PA1=asin(y(i,j,m))*180./pi       ! pitch angle in degree
-                  Wo=Eo*1.6e-16/bm(i,j,m)   ! normalization factor of mag moment
-                  do k=1,iw
-                     Enor(k)=ekev(i,j,k,m)/Eo
-                     gjac(k)=(Enor(k)+1.)*sqrt(Enor(k)*(Enor(k)+2.))
-                     WM_1=sqrt(w(k)*w(k-1))             ! M@lower grid
-                     WM1=sqrt(w(k)*w(k+1))              ! M@upper grid
-                     E_1(k)=sqrt(2.*WM_1/Wo+1.)-1. ! normalized kinetic energy
-                     E1(k)=sqrt(2.*WM1/Wo+1.)-1.   ! normalized kinetic energy
-                     dEn(k)=E1(k)-E_1(k)
-                  enddo
+        if (ro1.gt.r_wave.and.ompe1.le.ompea(ipe).and.Wpower.gt.0.) then
+           do m=1,ik
+              PA1=asin(y(i,j,m))*180./pi       ! pitch angle in degree
+              Wo=Eo*1.6e-16/bm(i,j,m)   ! normalization factor of mag moment
+              do k=1,iw
+                 Enor(k)=ekev(i,j,k,m)/Eo
+                 gjac(k)=(Enor(k)+1.)*sqrt(Enor(k)*(Enor(k)+2.))
+                 WM_1=sqrt(w(k)*w(k-1))             ! M@lower grid
+                 WM1=sqrt(w(k)*w(k+1))              ! M@upper grid
+                 E_1(k)=sqrt(2.*WM_1/Wo+1.)-1. ! normalized kinetic energy
+                 E1(k)=sqrt(2.*WM1/Wo+1.)-1.   ! normalized kinetic energy
+                 dEn(k)=E1(k)-E_1(k)
+              enddo
 
-                  ! determine k1 and k2, corresponding to ckeV(1) and ckeV(iwc)
-                  k1=iw2(m)
-                  findk1: do k=iw1(m),iw2(m)
-                     if (ckeV(1).le.ekev(i,j,k,m)) then
-                        k1=k
-                        exit findk1
-                     endif
-                  enddo findk1
-                  k2=iw1(m)
-                  findk2: do k=iw2(m),iw1(m),-1
-                     if (ckeV(iwc).ge.ekev(i,j,k,m)) then
-                        k2=k
-                        exit findk2
-                     endif
-                  enddo findk2
-                  iww=k2-k1+1
-                  if (k1.le.iw1(m).or.k2.ge.iw2(m)) then
-                     write(*,*) ' Error: k1.le.iw1(m).or.k2.ge.iw2(m)'
-                     stop
-                  endif
+              ! determine k1 and k2, corresponding to ckeV(1) and ckeV(iwc)
+              k1=iw2(m)
+              findk1: do k=iw1(m),iw2(m)
+                 if (ckeV(1).le.ekev(i,j,k,m)) then
+                    k1=k
+                    exit findk1
+                 endif
+              enddo findk1
+              k2=iw1(m)
+              findk2: do k=iw2(m),iw1(m),-1
+                 if (ckeV(iwc).ge.ekev(i,j,k,m)) then
+                    k2=k
+                    exit findk2
+                 endif
+              enddo findk2
+              iww=k2-k1+1
+              if (k1.le.iw1(m).or.k2.ge.iw2(m)) then
+                 write(*,*) ' Error: k1.le.iw1(m).or.k2.ge.iw2(m)'
+                 stop
+              endif
 
-                  u_mx=0.
-                  do k=k1,k2
-                     factor_1=dEn(k)*(Enor(k)-Enor(k-1))   ! normalized factor
-                     factor1=dEn(k)*(Enor(k+1)-Enor(k))    !
-                     gjac_1=(E_1(k)+1.)*sqrt(E_1(k)*(E_1(k)+2.))
-                     gjac1=(E1(k)+1.)*sqrt(E1(k)*(E1(k)+2.))
+              u_mx=0.
+              do k=k1,k2
+                 factor_1=dEn(k)*(Enor(k)-Enor(k-1))   ! normalized factor
+                 factor1=dEn(k)*(Enor(k+1)-Enor(k))    !
+                 gjac_1=(E_1(k)+1.)*sqrt(E_1(k)*(E_1(k)+2.))
+                 gjac1=(E1(k)+1.)*sqrt(E1(k)*(E1(k)+2.))
 
-                     ! find DEE/E^2 by interpolation
-                     Em=E_1(k)*Eo             ! Em in keV
-                     Ep=E1(k)*Eo              ! Ep in keV
-                     call lintp4(cLshell,ompea,ckeV,cPA,cDEE,irc,ipe,iwc,ipa,&
-                                 ro1,ompe1,Em,PA1,DEEm)
-                     call lintp4(cLshell,ompea,ckeV,cPA,cDEE,irc,ipe,iwc,ipa,&
-                                 ro1,ompe1,Ep,PA1,DEEp)
-                     DEEm=DEEm*Wpower/Wpower0    ! these are actually DEE/E^2
-                     DEEp=DEEp*Wpower/Wpower0    !
-                     DDm=DEEm*E_1(k)*E_1(k)*gjac_1
-                     DDp=DEEp*E1(k)*E1(k)*gjac1
+                 ! find DEE/E^2 by interpolation
+                 Em=E_1(k)*Eo             ! Em in keV
+                 Ep=E1(k)*Eo              ! Ep in keV
+                 call lintp4(cLshell,ompea,ckeV,cPA,cDEE,irc,ipe,iwc,ipa,&
+                      ro1,ompe1,Em,PA1,DEEm)
+                 call lintp4(cLshell,ompea,ckeV,cPA,cDEE,irc,ipe,iwc,ipa,&
+                      ro1,ompe1,Ep,PA1,DEEp)
+                 DEEm=DEEm*Wpower/Wpower0    ! these are actually DEE/E^2
+                 DEEp=DEEp*Wpower/Wpower0    !
+                 DDm=DEEm*E_1(k)*E_1(k)*gjac_1
+                 DDp=DEEp*E1(k)*E1(k)*gjac1
 
-                     um(k)=dt*DDm/factor_1/gjac(k)
-                     up(k)=dt*DDp/factor1/gjac(k)
-                     ump_mx=max(abs(up(k)),abs(um(k)))
-                     if (ump_mx.gt.u_mx) u_mx=ump_mx
-                  enddo             ! end k loop
+                 um(k)=dt*DDm/factor_1/gjac(k)
+                 up(k)=dt*DDp/factor1/gjac(k)
+                 ump_mx=max(abs(up(k)),abs(um(k)))
+                 if (ump_mx.gt.u_mx) u_mx=ump_mx
+              enddo             ! end k loop
 
-                  ! reduce time step size if up or um is too large
-                  irun=ifix(u_mx)+1
-                  do k=k1,k2
-                     um(k)=um(k)/irun
-                     up(k)=up(k)/irun
-                     a1d(k)=-xlam*um(k)
-                     b1d(k)=1.+xlam*(um(k)+up(k))
-                     c1d(k)=-xlam*up(k)
-                  enddo
-                  ! Start diffusion in E
-                  do k=k1-1,k2+1
-                     fl(k)=f2(i,j,k,m)/xjac(i,k)   ! fl is psd
-                  enddo
-                  do nrun=1,irun
-                     fr(k1)=alam*um(k1)*fl(k1-1)+(1.-alam*(up(k1)+um(k1)))*&
-                           fl(k1)+alam*up(k1)*fl(k1+1)+xlam*um(k1)*fl(k1-1)
-                     do k=k1+1,k2-1    ! calculate the RHS of matrix equation
-                        fr(k)=alam*um(k)*fl(k-1)+(1.-alam*(up(k)+um(k)))*&
-                              fl(k)+alam*up(k)*fl(k+1)
-                     enddo
-                     fr(k2)=alam*um(k2)*fl(k2-1)+(1.-alam*(up(k2)+um(k2)))*&
-                           fl(k2)+alam*up(k2)*fl(k2+1)+xlam*up(k2)*fl(k2+1)
-                     call tridag(a1d(k1),b1d(k1),c1d(k1),fr(k1),fl(k1),iww,ier)
-                  enddo
+              ! reduce time step size if up or um is too large
+              irun=ifix(u_mx)+1
+              do k=k1,k2
+                 um(k)=um(k)/irun
+                 up(k)=up(k)/irun
+                 a1d(k)=-xlam*um(k)
+                 b1d(k)=1.+xlam*(um(k)+up(k))
+                 c1d(k)=-xlam*up(k)
+              enddo
+              ! Start diffusion in E
+              do k=k1-1,k2+1
+                 fl(k)=f2(i,j,k,m)/xjac(i,k)   ! fl is psd
+              enddo
+              do nrun=1,irun
+                 fr(k1)=alam*um(k1)*fl(k1-1)+(1.-alam*(up(k1)+um(k1)))*&
+                      fl(k1)+alam*up(k1)*fl(k1+1)+xlam*um(k1)*fl(k1-1)
+                 do k=k1+1,k2-1    ! calculate the RHS of matrix equation
+                    fr(k)=alam*um(k)*fl(k-1)+(1.-alam*(up(k)+um(k)))*&
+                         fl(k)+alam*up(k)*fl(k+1)
+                 enddo
+                 fr(k2)=alam*um(k2)*fl(k2-1)+(1.-alam*(up(k2)+um(k2)))*&
+                      fl(k2)+alam*up(k2)*fl(k2+1)+xlam*up(k2)*fl(k2+1)
+                 call tridag(a1d(k1),b1d(k1),c1d(k1),fr(k1),fl(k1),iww,ier)
+              enddo
 
-                  ! get back f2
-                  do k=k1,k2
-                     f2(i,j,k,m)=fl(k)*xjac(i,k)
-                  enddo
+              ! get back f2
+              do k=k1,k2
+                 f2(i,j,k,m)=fl(k)*xjac(i,k)
+              enddo
 
-               enddo       ! end of m=1,ik
-            endif          ! end of if (ompe1.le.ompea(ipe).and.Wpower.gt.0.)
+           enddo       ! end of m=1,ik
+        endif          ! end of if (ompe1.le.ompea(ipe).and.Wpower.gt.0.)
 
-         enddo       ! end of i loop
-      enddo          ! end of j loop
+     enddo       ! end of i loop
+  enddo          ! end of j loop
 
-      end subroutine diffusee_E
+end subroutine diffusee_E
 
 
 !****************************************************************************
@@ -3038,22 +3043,22 @@ end subroutine InterFlux
 !  Chorus wave amplitude data were provided by Meredith and electron-Chorus
 !  Daa is from Horne.
 !****************************************************************************
-      subroutine diffusea_a(f2,xjac,ro,ekev,y,tya,dt,CHpower,ompe, &
-                            cLshell,ompea,ckeV,cPA,cDaa,iba,iw1,iw2)
-      use rbe_grid
-      implicit none
-      integer,parameter :: ie=40
-      real f2(ir,ip,iw,ik),xjac(ir,iw),ro(ir,ip),ekev(ir,ip,iw,ik),&
-           y(ir,ip,0:ik+1),tya(ir,ip,0:ik+1),ein_log(ie),&
-           f1d(iw),e1d(iw),ein(ie),ao(0:ik+1),dao(ik),Gjac(0:ik+1),DD(0:ik+1),&
-           um(ik),up(ik),a1d(ik),b1d(ik),c1d(ik),f0(0:ik+1),&
-           f2d(ie,ik),df(ie,ik),df1(ie),fr(ik),ekevlog(iw,ik), &
-           cLshell(irc),ompea(ipe),CHpower(ir,ip),ompe(ir,ip),ckeV(iwc), &
-           cPA(ipa),cDaa(irc,ipe,iwc,ipa)
-      real u_max,u_max_log,Wpower0,ompe1,Wpower,ro1,emin,emax,x0,x2,x,Daoao,DDp
-      real u_mx,u_mx_log,factor1,factor_1,DDm,DDo,ump_mx,xlam,alam,dpsd,dt,ao_d
-      real pi,r_wave
-      integer iba(ip),iw1(ik),iw2(ik),i,j,m,k,irun,n,ier
+subroutine diffusea_a(f2,xjac,ro,ekev,y,tya,dt,CHpower,ompe, &
+     cLshell,ompea,ckeV,cPA,cDaa,iba,iw1,iw2)
+  use rbe_grid
+  implicit none
+  integer,parameter :: ie=40
+  real f2(ir,ip,iw,ik),xjac(ir,iw),ro(ir,ip),ekev(ir,ip,iw,ik),&
+       y(ir,ip,0:ik+1),tya(ir,ip,0:ik+1),ein_log(ie),&
+       f1d(iw),e1d(iw),ein(ie),ao(0:ik+1),dao(ik),Gjac(0:ik+1),DD(0:ik+1),&
+       um(ik),up(ik),a1d(ik),b1d(ik),c1d(ik),f0(0:ik+1),&
+       f2d(ie,ik),df(ie,ik),df1(ie),fr(ik),ekevlog(iw,ik), &
+       cLshell(irc),ompea(ipe),CHpower(ir,ip),ompe(ir,ip),ckeV(iwc), &
+       cPA(ipa),cDaa(irc,ipe,iwc,ipa)
+  real u_max,u_max_log,Wpower0,ompe1,Wpower,ro1,emin,emax,x0,x2,x,Daoao,DDp
+  real u_mx,u_mx_log,factor1,factor_1,DDm,DDo,ump_mx,xlam,alam,dpsd,dt,ao_d
+  real pi,r_wave
+  integer iba(ip),iw1(ik),iw2(ik),i,j,m,k,irun,n,ier
 
   pi=acos(-1.)
   u_max=100.               ! maximum value of mu
@@ -3069,156 +3074,156 @@ end subroutine InterFlux
         ro1=ro(i,j)
 
         if (ro1.gt.r_wave.and.ompe1.le.ompea(ipe).and.Wpower.gt.0.) then
-            ! Set up the energy grid, ein
-            emin=1.e20
-            do m=1,ik
-               emin=min(emin,ekev(i,j,iw1(m),m))
-            enddo
-            emax=0.
-            do m=1,ik
-               emax=max(emax,ekev(i,j,iw2(m),m))
-            enddo
-            ein(1)=emin
-            ein(ie)=emax
-            ein_log(1)=log10(emin)
-            ein_log(ie)=log10(emax)
-            x0=ein_log(1)
-            x2=ein_log(ie)
-            x=(x2-x0)/(ie-1)
-            do k=2,ie-1
-               ein_log(k)=x0+(k-1)*x
-               ein(k)=10.**ein_log(k)
-            enddo
+           ! Set up the energy grid, ein
+           emin=1.e20
+           do m=1,ik
+              emin=min(emin,ekev(i,j,iw1(m),m))
+           enddo
+           emax=0.
+           do m=1,ik
+              emax=max(emax,ekev(i,j,iw2(m),m))
+           enddo
+           ein(1)=emin
+           ein(ie)=emax
+           ein_log(1)=log10(emin)
+           ein_log(ie)=log10(emax)
+           x0=ein_log(1)
+           x2=ein_log(ie)
+           x=(x2-x0)/(ie-1)
+           do k=2,ie-1
+              ein_log(k)=x0+(k-1)*x
+              ein(k)=10.**ein_log(k)
+           enddo
 
-            ! Map psd to ein grid, f2d
-            do m=1,ik
-               do k=1,iw
-                  f1d(k)=-50.                      ! f1d is log(psd)
-                  if (f2(i,j,k,m).gt.0.) f1d(k)=log10(f2(i,j,k,m)/xjac(i,k))
-                  ekevlog(k,m)=log10(ekev(i,j,k,m))
-                  e1d(k)=ekevlog(k,m)              ! e1d is log(ekev)
-               enddo
-               do k=1,iw
-                  if (k.lt.iw1(m)) f1d(k)=f1d(iw1(m))
-                  if (k.gt.iw2(m)) f1d(k)=f1d(iw2(m))
-               enddo
+           ! Map psd to ein grid, f2d
+           do m=1,ik
+              do k=1,iw
+                 f1d(k)=-50.                      ! f1d is log(psd)
+                 if (f2(i,j,k,m).gt.0.) f1d(k)=log10(f2(i,j,k,m)/xjac(i,k))
+                 ekevlog(k,m)=log10(ekev(i,j,k,m))
+                 e1d(k)=ekevlog(k,m)              ! e1d is log(ekev)
+              enddo
+              do k=1,iw
+                 if (k.lt.iw1(m)) f1d(k)=f1d(iw1(m))
+                 if (k.gt.iw2(m)) f1d(k)=f1d(iw2(m))
+              enddo
 
-               do k=1,ie
-                  if (ein_log(k).ge.e1d(1).and.ein_log(k).le.e1d(iw)) then
-                     call lintp(e1d,f1d,iw,ein_log(k),x)
-                     f2d(k,m)=10.**x      ! f2d is psd
-                  endif
-               enddo
-            enddo
-            ! Calculate f2d when ein is beyond the range of ekev
-            do m=1,ik
-               do k=1,ie
-                  if (ein_log(k).lt.ekevlog(1,m)) f2d(k,m)=f2d(k,m-1)
-               enddo
-            enddo
-            do m=ik,1,-1
-               do k=1,ie
-                  if (ein_log(k).gt.ekevlog(iw,m)) f2d(k,m)=f2d(k,m+1)
-               enddo
-            enddo
+              do k=1,ie
+                 if (ein_log(k).ge.e1d(1).and.ein_log(k).le.e1d(iw)) then
+                    call lintp(e1d,f1d,iw,ein_log(k),x)
+                    f2d(k,m)=10.**x      ! f2d is psd
+                 endif
+              enddo
+           enddo
+           ! Calculate f2d when ein is beyond the range of ekev
+           do m=1,ik
+              do k=1,ie
+                 if (ein_log(k).lt.ekevlog(1,m)) f2d(k,m)=f2d(k,m-1)
+              enddo
+           enddo
+           do m=ik,1,-1
+              do k=1,ie
+                 if (ein_log(k).gt.ekevlog(iw,m)) f2d(k,m)=f2d(k,m+1)
+              enddo
+           enddo
 
-            ! calcuate ao, dao, and Gjac
-            do m=0,ik+1
-               ao(m)=asin(y(i,j,m))
-               Gjac(m)=tya(i,j,m)*y(i,j,m)*sqrt(1.-y(i,j,m)*y(i,j,m))
-            enddo
-            do m=1,ik
-               dao(m)=0.5*(ao(m+1)-ao(m-1))
-            enddo
+           ! calcuate ao, dao, and Gjac
+           do m=0,ik+1
+              ao(m)=asin(y(i,j,m))
+              Gjac(m)=tya(i,j,m)*y(i,j,m)*sqrt(1.-y(i,j,m)*y(i,j,m))
+           enddo
+           do m=1,ik
+              dao(m)=0.5*(ao(m+1)-ao(m-1))
+           enddo
 
-            df=0.
-            do k=1,ie      ! *****
-             if (ein(k).ge.ckeV(1).and.ein(k).le.ckeV(iwc)) then
+           df=0.
+           do k=1,ie      ! *****
+              if (ein(k).ge.ckeV(1).and.ein(k).le.ckeV(iwc)) then
 
-               ! calculate DD, Daoao*Gjac
-               do m=0,ik+1
-                  ao_d=ao(m)*180./pi
-                  call lintp4(cLshell,ompea,ckeV,cPA,cDaa,irc,ipe,iwc,ipa, &
-                              ro1,ompe1,ein(k),ao_d,Daoao)
-                  Daoao=Daoao*Wpower/Wpower0     ! scale daa with Wpower/Wpower0
-                  DD(m)=Daoao*Gjac(m)
-               enddo
+                 ! calculate DD, Daoao*Gjac
+                 do m=0,ik+1
+                    ao_d=ao(m)*180./pi
+                    call lintp4(cLshell,ompea,ckeV,cPA,cDaa,irc,ipe,iwc,ipa, &
+                         ro1,ompe1,ein(k),ao_d,Daoao)
+                    Daoao=Daoao*Wpower/Wpower0     ! scale daa with Wpower/Wpower0
+                    DD(m)=Daoao*Gjac(m)
+                 enddo
 
-               ! calculate up and um
-               u_mx=0.
-               do m=1,ik
-                  factor_1=dao(m)*(ao(m)-ao(m-1))
-                  factor1=dao(m)*(ao(m+1)-ao(m))
-                  DDm=0.5*(DD(m)+DD(m-1))
-                  DDp=0.5*(DD(m)+DD(m+1))
-                  um(m)=dt*DDm/factor_1/Gjac(m)
-                  up(m)=dt*DDp/factor1/Gjac(m)
-                  ump_mx=max(abs(up(m)),abs(um(m)))
-                  if (ump_mx.gt.u_mx) u_mx=ump_mx
-               enddo
+                 ! calculate up and um
+                 u_mx=0.
+                 do m=1,ik
+                    factor_1=dao(m)*(ao(m)-ao(m-1))
+                    factor1=dao(m)*(ao(m+1)-ao(m))
+                    DDm=0.5*(DD(m)+DD(m-1))
+                    DDp=0.5*(DD(m)+DD(m+1))
+                    um(m)=dt*DDm/factor_1/Gjac(m)
+                    up(m)=dt*DDp/factor1/Gjac(m)
+                    ump_mx=max(abs(up(m)),abs(um(m)))
+                    if (ump_mx.gt.u_mx) u_mx=ump_mx
+                 enddo
 
-               ! reduce time step if u_mx > u_max
-               irun=ifix(u_mx/u_max)+1
-               do m=1,ik
-                  um(m)=um(m)/irun
-                  up(m)=up(m)/irun
-               enddo
+                 ! reduce time step if u_mx > u_max
+                 irun=ifix(u_mx/u_max)+1
+                 do m=1,ik
+                    um(m)=um(m)/irun
+                    up(m)=up(m)/irun
+                 enddo
 
-               ! determine the implicitness, xlam
-               if (u_mx.le.1.) then
-                  xlam=0.5              ! Crank-Nicolson
-               else
-                  u_mx_log=log10(u_mx)
-                  xlam=0.5*u_mx_log/u_max_log+0.5
-               endif
-               alam=1.-xlam
+                 ! determine the implicitness, xlam
+                 if (u_mx.le.1.) then
+                    xlam=0.5              ! Crank-Nicolson
+                 else
+                    u_mx_log=log10(u_mx)
+                    xlam=0.5*u_mx_log/u_max_log+0.5
+                 endif
+                 alam=1.-xlam
 
-               ! calculate a1d, b1d, c1d
-               do m=1,ik
-                  a1d(m)=-xlam*um(m)
-                  b1d(m)=1.+xlam*(um(m)+up(m))
-                  c1d(m)=-xlam*up(m)
-               enddo
+                 ! calculate a1d, b1d, c1d
+                 do m=1,ik
+                    a1d(m)=-xlam*um(m)
+                    b1d(m)=1.+xlam*(um(m)+up(m))
+                    c1d(m)=-xlam*up(m)
+                 enddo
 
-               ! start diffusion in ao
-               f0(1:ik)=f2d(k,1:ik)
-               do n=1,irun
-                  f0(0)=f0(1)
-                  f0(ik+1)=f0(ik)
-                  fr(1)=alam*um(1)*f0(0)+(1.-alam*(up(1)+um(1)))*f0(1)+ &
-                        alam*up(1)*f0(2)+xlam*um(1)*f0(0)
-                  do m=2,ik-1    ! calculate the RHS of matrix equation
-                     fr(m)=alam*um(m)*f0(m-1)+(1.-alam*(up(m)+um(m)))*f0(m)+ &
-                           alam*up(m)*f0(m+1)
-                  enddo
-                  fr(ik)=alam*um(ik)*f0(ik-1)+(1.-alam*(up(ik)+um(ik)))*f0(ik) &
+                 ! start diffusion in ao
+                 f0(1:ik)=f2d(k,1:ik)
+                 do n=1,irun
+                    f0(0)=f0(1)
+                    f0(ik+1)=f0(ik)
+                    fr(1)=alam*um(1)*f0(0)+(1.-alam*(up(1)+um(1)))*f0(1)+ &
+                         alam*up(1)*f0(2)+xlam*um(1)*f0(0)
+                    do m=2,ik-1    ! calculate the RHS of matrix equation
+                       fr(m)=alam*um(m)*f0(m-1)+(1.-alam*(up(m)+um(m)))*f0(m)+ &
+                            alam*up(m)*f0(m+1)
+                    enddo
+                    fr(ik)=alam*um(ik)*f0(ik-1)+(1.-alam*(up(ik)+um(ik)))*f0(ik) &
                          +alam*up(ik)*f0(ik+1)+xlam*up(ik)*f0(ik+1)
-                  call tridag(a1d,b1d,c1d,fr,f0(1:ik),ik,ier)
-               enddo
-               do m=1,ik
-                  df(k,m)=f0(m)-f2d(k,m)    ! df is differential psd
-               enddo
+                    call tridag(a1d,b1d,c1d,fr,f0(1:ik),ik,ier)
+                 enddo
+                 do m=1,ik
+                    df(k,m)=f0(m)-f2d(k,m)    ! df is differential psd
+                 enddo
 
-             endif
-            enddo         ! end of do k=1,ie      ! *****
+              endif
+           enddo         ! end of do k=1,ie      ! *****
 
-            ! map psd back to M grid
-            do m=1,ik
-               do k=1,ie
-                  df1(k)=df(k,m)
-               enddo
-               do k=iw1(m),iw2(m)
-                  call lintp(ein_log,df1,ie,ekevlog(k,m),dpsd)
-                  f2(i,j,k,m)=f2(i,j,k,m)+xjac(i,k)*dpsd
-                  if (f2(i,j,k,m).lt.0.) f2(i,j,k,m)=0.
-               enddo
-            enddo
-        endif   
+           ! map psd back to M grid
+           do m=1,ik
+              do k=1,ie
+                 df1(k)=df(k,m)
+              enddo
+              do k=iw1(m),iw2(m)
+                 call lintp(ein_log,df1,ie,ekevlog(k,m),dpsd)
+                 f2(i,j,k,m)=f2(i,j,k,m)+xjac(i,k)*dpsd
+                 if (f2(i,j,k,m).lt.0.) f2(i,j,k,m)=0.
+              enddo
+           enddo
+        endif
 
      enddo
   enddo
 
-  end subroutine diffusea_a
+end subroutine diffusea_a
 
 !!***********************************************************************
 !!                            FCT_2or
@@ -3462,7 +3467,7 @@ subroutine lintp4(x,y,z,u,v,nx,ny,nz,nu,x1,y1,z1,u1,v1)
   !  This sub program takes 4-d interplation. 
   !
   real x(nx),y(ny),z(nz),u(nu),v(nx,ny,nz,nu)
-  
+
   call locate1(x,nx,x1,i)
   call locate1(y,ny,y1,j)
   call locate1(z,nz,z1,k)
@@ -3472,7 +3477,7 @@ subroutine lintp4(x,y,z,u,v,nx,ny,nz,nu,x1,y1,z1,u1,v1)
      v1=0.                         ! v1=0 if out of range
      goto 1
   endif
-  
+
   i1=i+1
   j1=j+1
   k1=k+1
@@ -3485,35 +3490,35 @@ subroutine lintp4(x,y,z,u,v,nx,ny,nz,nu,x1,y1,z1,u1,v1)
   b=1.-b1
   c=1.-c1
   d=1.-d1
-  
+
   q0000=a*b*c*d
   q0001=a*b*c*d1
   q0010=a*b*c1*d
   q0011=a*b*c1*d1
-  
+
   q0100=a*b1*c*d
   q0101=a*b1*c*d1
   q0110=a*b1*c1*d
   q0111=a*b1*c1*d1
-  
+
   q1000=a1*b*c*d
   q1001=a1*b*c*d1
   q1010=a1*b*c1*d
   q1011=a1*b*c1*d1
-  
+
   q1100=a1*b1*c*d
   q1101=a1*b1*c*d1
   q1110=a1*b1*c1*d
   q1111=a1*b1*c1*d1
-  
+
   v1=q0000*v(i,j,k,l)+q0001*v(i,j,k,l1)+q0010*v(i,j,k1,l)+&
        q0011*v(i,j,k1,l1)+q0100*v(i,j1,k,l)+q0101*v(i,j1,k,l1)+&
        q0110*v(i,j1,k1,l)+q0111*v(i,j1,k1,l1)+q1000*v(i1,j,k,l)+&
        q1001*v(i1,j,k,l1)+q1010*v(i1,j,k1,l)+q1011*v(i1,j,k1,l1)+&
        q1100*v(i1,j1,k,l)+q1101*v(i1,j1,k,l1)+q1110*v(i1,j1,k1,l)+&
        q1111*v(i1,j1,k1,l1)
-  
-1 return
+
+1 RETURN
 end subroutine lintp4
 
 
@@ -3589,9 +3594,9 @@ end subroutine ilocate
 
 !--------------------------------------------------------------------------
 subroutine indexx(n,arrin,indx)
-  
+
   !  Routine arranges an array in ascending order.
-  
+
   real arrin(n)
   integer indx(n)
   do  j=1,n
@@ -3611,7 +3616,7 @@ subroutine indexx(n,arrin,indx)
      ir=ir-1
      if(ir.eq.1)then
         indx(1)=indxt
-        return
+        RETURN
      endif
   endif
   i=l
@@ -3631,14 +3636,14 @@ subroutine indexx(n,arrin,indx)
   endif
   indx(i)=indxt
   go to 10
-  
+
 end subroutine indexx
 
 !-----------------------------------------------------------------------------
 subroutine tridag(a,b,c,r,u,n,ier)
-  
+
   !  Routine solves the tri-diagonal matrix equation.
-  
+
   parameter (nmax=100)
   real gam(nmax),a(n),b(n),c(n),r(n),u(n)
   !
@@ -3646,7 +3651,7 @@ subroutine tridag(a,b,c,r,u,n,ier)
   !
   if(b(1).eq.0.)then
      ier = 1
-     return
+     RETURN
   endif
   ier = 0
   bet=b(1)
@@ -3662,7 +3667,7 @@ subroutine tridag(a,b,c,r,u,n,ier)
      !
      if(bet.eq.0.)then
         ier = 2
-        return
+        RETURN
      endif
      u(j)=(r(j)-a(j)*u(j-1))/bet
   end do
@@ -3909,7 +3914,7 @@ end subroutine modd_dayno
 !10 FORMAT(//,1X,'**** COMPUTATIONS IN THE SUBROUTINE TRACE ARE',&
 !        ' TERMINATED: THE CURRENT NUMBER OF POINTS EXCEEDED 1000 ****'//)
 !END SUBROUTINE TRACE1  
-    
+
 
 !-----------------------------------------------------------------------------
 function gammln(xx)
@@ -3941,10 +3946,10 @@ function derivative_3pt(x0,x1,x2,f0,f1,f2,xj)
   ! (R. Burden, and J. Faires, Numerical Analysis, Prindle, 
   ! Weber & Schmidt, 1985).
 
- der0=f0*(2.*xj-x1-x2)/((x0-x1)*(x0-x2))
- der1=f1*(2.*xj-x0-x2)/((x1-x0)*(x1-x2))
- der2=f2*(2.*xj-x0-x1)/((x2-x0)*(x2-x1))
- derivative_3pt=der0+der1+der2
+  der0=f0*(2.*xj-x1-x2)/((x0-x1)*(x0-x2))
+  der1=f1*(2.*xj-x0-x2)/((x1-x0)*(x1-x2))
+  der2=f2*(2.*xj-x0-x1)/((x2-x0)*(x2-x1))
+  derivative_3pt=der0+der1+der2
 
 end function derivative_3pt
 
