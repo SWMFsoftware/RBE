@@ -2113,9 +2113,6 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
 
   character(len=*), parameter:: NameSub = 'p_result'
   !---------------------------------------------------------------------------
-
-  if(t <= 0.0) RETURN
-  
   hour=t/3600.
   do i=1,ir
      xlati1(i)=xlati(i)*180./pi   ! lat. at ionosphere in degree
@@ -2146,10 +2143,9 @@ subroutine p_result(t,tstart,f2,rc,xlati,ekev,y,p,ro,xmlto,xmlt,&
            RETURN
         endif
      else
-        if (t.eq.tstart) then
+        if (t == tstart) then
            call open_file(FILE='RB/plots/'//outname//st2//'.fls', &
                 status='unknown', NameCaller=NameSub//':2')
-           !        open(unit=13,file=outname//st2//'.psd',status='unknown')
            write(UnitTmp_,'(f10.5,5i6,"         ! rc(Re),ir,ip,je,ig,ntime")')&
                 rc,ir,ip,je,ig,ntime
            write(UnitTmp_,'(6f9.3)') (gride(k),k=1,je)
