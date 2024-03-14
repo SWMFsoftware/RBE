@@ -76,11 +76,11 @@ ${EXE}: ${OBJECTS_EXE}
 		ar -x ${LIBNOMPI}; \
 		ar -x ${LIBEMPIRICALGM};\
 		ar -x ${LIBEMPIRICALIE};
-	${LINK.f90} -o ${EXE} ${OBJECTS_EXE} Tmp_/*.o ${LBLAS} ${Lflag2}
+	${LINK.f90} -o ${EXE} ${OBJECTS_EXE} Tmp_/*.o ${LBLAS} ${Lflag}
 	rm -rf Tmp_
 
 RBE_orig:
-	${COMPILE.f90} ${Lflag2} -o ${EXE} rbe_main.f90 ${OBJECTS} \
+	${COMPILE.f90} ${Lflag} -o ${EXE} rbe_main.f90 ${OBJECTS} \
 	-L${LIBDIR} -lTIMING -lSHARE -lNOMPI
 
 clean: cleanfiles
