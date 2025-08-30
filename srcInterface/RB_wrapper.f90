@@ -115,11 +115,11 @@ contains
     call set_grid_descriptor( RB_,                 & ! component index
          nDim=2,                                   & ! dimensionality
          nRootBlock_D=(/1,1/),                     & ! single block
-         nCell_D=(/ir, ip/),                     & ! size of cell based grid
-         XyzMin_D=(/cHalf, cHalf/),                & ! min gen.coords for cells
+         nCell_D=(/ir, ip/),                       & ! size of cell based grid
+         XyzMin_D=(/0.5, 0.5/),                    & ! min gen.coords for cells
          XyzMax_D=(/ir-0.5,ip-0.5/),               & ! max gen.coords for cells
          TypeCoord='SMG',                          & ! solar magnetic coord
-         Coord1_I=cRadToDeg*xlati(1:ir),         & ! latitude in degrees
+         Coord1_I=cRadToDeg*xlati(1:ir),           & ! latitude in degrees
          Coord2_I=mod(cRadToDeg*phi+180.0,360.0),  & ! longitude in degrees
          Coord3_I=Radius_I,                        & ! radial size in meters
          IsPeriodic_D=(/.false.,.true./))            ! periodic in longitude
